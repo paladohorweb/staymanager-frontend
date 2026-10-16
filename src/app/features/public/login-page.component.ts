@@ -18,7 +18,7 @@ import { environment } from '../../../environments/environment';
         <form class="login-form" (ngSubmit)="submit()">
           <a routerLink="/" class="mobile-login-brand brand"><span class="brand-mark">S</span><span><strong>Stay</strong>Manager</span></a>
           <span class="eyebrow">BIENVENIDO DE NUEVO</span><h2>Accede a tu espacio</h2><p>Gestiona la operación desde cualquier lugar.</p>
-          <div class="demo-credentials"><strong>Cuenta de demostración</strong><span>owner&#64;demo.com</span><span>Demo123*</span><button type="button" (click)="fillDemo()">Usar credenciales</button></div>
+          @if(demoMode){<div class="demo-credentials"><strong>Cuenta de demostración</strong><span>owner&#64;demo.com</span><span>Demo123*</span><button type="button" (click)="enterDemo()" [disabled]="loading()">Entrar ahora</button></div>}
           <label>Correo electrónico<input type="email" name="email" [(ngModel)]="email" required autocomplete="email" placeholder="nombre@empresa.com"></label>
           <label>Contraseña<input type="password" name="password" [(ngModel)]="password" required autocomplete="current-password" placeholder="••••••••"></label>
           @if (error()) { <div class="alert alert-danger py-2" role="alert">{{ error() }}</div> }
@@ -45,6 +45,7 @@ export class LoginPageComponent {
     private readonly route: ActivatedRoute
   ) {}
   fillDemo(): void { this.email = 'owner@demo.com'; this.password = 'Demo123*'; this.error.set(''); }
+  async enterDemo(): Promise<void> { this.fillDemo(); await this.submit(); }
   async submit(): Promise<void> {
     this.error.set('');
     this.loading.set(true);

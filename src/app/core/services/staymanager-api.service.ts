@@ -553,8 +553,8 @@ export class StayManagerApiService {
     this.settings.set(this.normalizeSettings(this.loadDemo(this.demoKeys.settings, DEMO_SETTINGS)));
     this.syncDemoHousekeeping();
     this.notifications.set([
-      { id: 'demo-reservation', type: 'RESERVATION', title: 'Nueva reserva demo', message: 'María solicitó Cabaña Mirador.', link: '/admin/reservas', readAt: null, createdAt: new Date().toISOString() },
-      { id: 'demo-payment', type: 'PAYMENT', title: 'Pago validado', message: 'Se registró un anticipo de una reserva.', link: '/admin/pagos', readAt: null, createdAt: new Date(Date.now() - 3600000).toISOString() }
+      { id: 'demo-reservation', type: 'RESERVATION', title: 'Nueva reserva demo', message: 'Laura reservó Cabaña Nido.', link: '/admin/reservas', readAt: null, createdAt: new Date().toISOString() },
+      { id: 'demo-payment', type: 'PAYMENT', title: 'Pago pendiente de revisión', message: 'Santiago reportó $500.000 por Nequi.', link: '/admin/pagos', readAt: null, createdAt: new Date(Date.now() - 3600000).toISOString() }
     ]);
     this.error.set('');
     this.updateDemoDashboard();

@@ -11,15 +11,18 @@ import { currency, shortDate } from '../../shared/utils/format.utils';
   selector: 'app-dashboard-page',
   standalone: true,
   imports: [RouterLink],
+  styles: [`.demo-admin-guide{display:flex;justify-content:space-between;gap:1rem;align-items:center;margin-bottom:1.4rem;padding:1rem 1.2rem;border:1px solid #cfe3dc;border-radius:14px;background:#eef7f4;color:#184c41}.demo-admin-guide p{margin:0;font-size:.72rem}.demo-admin-guide nav{display:flex;gap:.45rem;flex-wrap:wrap}.demo-admin-guide a{padding:.45rem .65rem;border-radius:8px;background:#fff;color:var(--primary);font-size:.65rem;font-weight:800}@media(max-width:760px){.demo-admin-guide{align-items:flex-start;flex-direction:column}}`],
   template: `
     <section class="admin-heading">
       <div>
         <span class="eyebrow">RESUMEN GENERAL</span>
         <h1>{{ greeting() }}, {{ firstName() }}</h1>
-        <p>Indicadores operativos calculados con los datos reales de tu organización.</p>
+        <p>{{store.isDemoMode?'Explora una operación completa con información ficticia y editable.':'Indicadores operativos calculados con los datos reales de tu organización.'}}</p>
       </div>
       <a routerLink="/admin/reservas" class="btn btn-primary">＋ Nueva reserva</a>
     </section>
+
+    @if(store.isDemoMode){<section class="demo-admin-guide"><p><strong>Recorrido sugerido:</strong> revisa el pago pendiente, completa una salida y verifica cómo aparece la tarea de limpieza.</p><nav><a routerLink="/admin/pagos">1. Pagos</a><a routerLink="/admin/operacion">2. Operación</a><a routerLink="/admin/limpieza">3. Limpieza</a><a routerLink="/admin/alojamientos">4. Mapas</a></nav></section>}
 
     <section class="metric-grid">
       <article class="metric-card">

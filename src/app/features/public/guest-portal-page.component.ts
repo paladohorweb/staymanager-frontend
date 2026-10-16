@@ -13,7 +13,7 @@ type PortalTab = 'reservations' | 'experiences';
 @Component({
   selector: 'app-guest-portal-page', standalone: true, imports: [FormsModule, RouterLink],
   styles: [`
-    .portal-hero{padding:8rem 0 3.5rem;background:linear-gradient(135deg,#eaf5f1,#fff)}.portal-shell{max-width:1080px;margin:auto}.access-card{max-width:650px;margin:0 auto}.access-help{display:flex;gap:.7rem;align-items:flex-start;margin:1rem 0;padding:.8rem;background:#f3f8f6;border-radius:10px;color:var(--muted);font-size:.7rem}
+    .portal-hero{padding:8rem 0 3.5rem;background:linear-gradient(135deg,#eaf5f1,#fff)}.portal-shell{max-width:1080px;margin:auto}.access-card{max-width:650px;margin:0 auto}.access-help{display:flex;gap:.7rem;align-items:flex-start;margin:1rem 0;padding:.8rem;background:#f3f8f6;border-radius:10px;color:var(--muted);font-size:.7rem}.demo-access{display:flex;justify-content:space-between;gap:1rem;align-items:center;margin:1rem 0;padding:1rem;border:1px solid #d8e7e1;border-radius:12px;background:#eef7f4}.demo-access span,.demo-access strong{display:block}.demo-access span{margin-top:.2rem;color:var(--muted);font-size:.67rem}
     .portal-tabs{display:flex;gap:.5rem;margin-bottom:1.25rem;padding:.35rem;width:max-content;max-width:100%;background:#e9f0ed;border-radius:12px}.portal-tabs button{border:0;background:transparent;border-radius:9px;padding:.7rem 1rem;font-size:.7rem;font-weight:800;color:var(--muted)}.portal-tabs button.active{color:#fff;background:var(--primary);box-shadow:0 6px 16px rgba(15,118,110,.2)}
     .portal-grid{display:grid;grid-template-columns:1.35fr .65fr;gap:1.25rem;align-items:start}.stay-card,.payment-card{padding:1.5rem}.portal-heading{display:flex;justify-content:space-between;gap:1rem;align-items:start}.status-pill{border-radius:999px;padding:.45rem .8rem;background:#e8f0ff;color:#1d4ed8;font-weight:700;font-size:.78rem}
     .reservation-summary{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1rem;padding:.85rem 1rem;background:#f4f8f6;border-radius:12px}.reservation-summary small,.reservation-summary strong{display:block}.reservation-summary small{color:var(--muted)}.facts{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin:1.5rem 0}.fact{padding:1rem;background:#f8fafc;border-radius:12px}.fact small{display:block;color:#64748b}.fact strong{display:block;margin-top:.2rem}.payment-line{display:flex;justify-content:space-between;gap:1rem;margin:.7rem 0}.payment-line.pending{color:#98670b}.balance{padding-top:1rem;border-top:1px solid #e2e8f0;font-size:1.08rem}.portal-actions{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1.25rem}
@@ -21,7 +21,7 @@ type PortalTab = 'reservations' | 'experiences';
     .experience-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}.guest-experience{padding:1.25rem;background:#fff;border:1px solid var(--line);border-radius:15px}.experience-icon{width:45px;height:45px;display:grid;place-items:center;border-radius:12px;background:var(--primary-soft);color:var(--primary);font-size:1.15rem}.guest-experience h3{font:400 1.25rem Georgia,serif;margin:1rem 0 .45rem}.guest-experience p{font-size:.72rem}.experience-intro{padding:1.35rem;margin-bottom:1rem;display:flex;justify-content:space-between;gap:1.5rem;align-items:center}.experience-intro p{margin:0}
     .payment-modal>p{margin:-.25rem 0 1.25rem}.secure-note{display:flex;gap:.7rem;align-items:flex-start;margin:1rem 0;padding:.8rem;background:#eef7f4;border-radius:10px;color:var(--primary);font-size:.67rem}.method-choice{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin:.5rem 0 1rem}.method-choice button{border:1px solid #dbe4df;background:#fff;border-radius:10px;padding:.8rem;font-weight:700}.method-choice button.active{border-color:var(--primary);background:var(--primary-soft);color:var(--primary)}.honeypot{position:absolute!important;left:-10000px!important;width:1px!important;height:1px!important;overflow:hidden!important}
     @media(max-width:760px){.portal-grid,.experience-grid{grid-template-columns:1fr}.facts{grid-template-columns:1fr 1fr}.portal-heading{display:block}.status-pill{display:inline-block;margin-top:.5rem}.portal-actions .btn{flex:1 1 100%}.experience-intro{align-items:flex-start;flex-direction:column}.portal-tabs{width:100%}.portal-tabs button{flex:1}}
-    @media(max-width:460px){.facts{grid-template-columns:1fr}.stay-card,.payment-card{padding:1.1rem}.method-choice{grid-template-columns:1fr}.portal-hero h1{font-size:2rem}.reservation-summary{align-items:flex-start;flex-direction:column}}
+    @media(max-width:460px){.facts{grid-template-columns:1fr}.stay-card,.payment-card{padding:1.1rem}.method-choice{grid-template-columns:1fr}.portal-hero h1{font-size:2rem}.reservation-summary,.demo-access{align-items:flex-start;flex-direction:column}.demo-access .btn{width:100%}}
   `],
   template: `
     <section class="portal-hero"><div class="container portal-shell"><span class="eyebrow">PORTAL DEL HUÉSPED</span><h1>Mis reservas y experiencias</h1><p>Consulta tu estadía, revisa pagos y lleva tus solicitudes listas a WhatsApp.</p></div></section>
@@ -29,6 +29,7 @@ type PortalTab = 'reservations' | 'experiences';
       @if (!reservation()) {
         <form class="card-panel access-card" #accessForm="ngForm" (ngSubmit)="access()">
           <h2>Consultar mis reservas</h2><p>Ingresa el código y el mismo correo usado al solicitar la reserva.</p>
+          @if(demoMode){<div class="demo-access"><div><strong><i class="bi bi-stars me-1"></i>Prueba del portal del huésped</strong><span>ST-26001 · laura&#64;example.com</span></div><button class="btn btn-outline btn-small" type="button" (click)="useDemoReservation()">Usar reserva demo</button></div>}
           <div class="honeypot" aria-hidden="true"><label>No completar<input name="website" [(ngModel)]="website" tabindex="-1" autocomplete="off"></label></div>
           <div class="form-grid two"><label>Código de reserva<input name="code" [(ngModel)]="code" required maxlength="20" autocomplete="off" placeholder="ST-2601234"></label><label>Correo electrónico<input type="email" name="email" [(ngModel)]="email" required email autocomplete="email" placeholder="correo@ejemplo.com"></label></div>
           <div class="access-help"><i class="bi bi-shield-lock"></i><span>Combinamos ambos datos para evitar que otras personas consulten tu información.</span></div>
@@ -62,6 +63,7 @@ export class GuestPortalPageComponent {
   readonly reservation=signal<GuestPortalReservation|null>(null); readonly loading=signal(false); readonly error=signal('');
   readonly paymentOpen=signal(false); readonly activeTab=signal<PortalTab>('reservations');
   readonly money=currency; readonly date=shortDate; private formStartedAt=Date.now();
+  readonly demoMode=environment.demoMode;
   readonly experiences=[
     {title:'Desayuno especial',description:'Prepara una mañana tranquila con sabores locales.',icon:'bi bi-cup-hot'},
     {title:'Decoración romántica',description:'Solicita un detalle especial antes de tu llegada.',icon:'bi bi-heart'},
@@ -77,6 +79,7 @@ export class GuestPortalPageComponent {
     catch(error){this.error.set(this.errors.message(error,'No fue posible consultar la reserva.'));}
     finally{this.loading.set(false);}
   }
+  async useDemoReservation():Promise<void>{this.code='ST-26001';this.email='laura@example.com';await this.access(true);}
   async cancel():Promise<void>{if(!await this.alerts.confirm('¿Cancelar la reserva?','Esta acción liberará las fechas seleccionadas.'))return;this.loading.set(true);try{this.reservation.set(await this.store.cancelGuestReservation(this.code,this.email));await this.alerts.success('Reserva cancelada','El alojamiento recibió la actualización.');}catch(error){await this.alerts.error('No se pudo cancelar',this.errors.message(error));}finally{this.loading.set(false);}}
   openPayment(item:GuestPortalReservation):void{this.paymentAmount=item.balance;this.paymentReference='';this.paymentMethod=item.paymentInstructions.acceptedMethods[0]??'NEQUI';this.paymentOpen.set(true);}
   closePayment():void{this.paymentOpen.set(false);}

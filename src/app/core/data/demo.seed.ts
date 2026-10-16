@@ -88,6 +88,13 @@ export const DEMO_RESERVATIONS: Reservation[] = [
     checkIn: isoFromToday(-5), checkOut: isoFromToday(-3), adults: 2, children: 0, status: 'CHECKED_OUT',
     price: { nights: 2, weekdayNights: 2, weekendNights: 0, accommodationSubtotal: 820000, cleaningFee: 70000, serviceFee: 24600, total: 914600 },
     amountPaid: 914600, balance: 0, notes: '', createdAt: new Date().toISOString()
+  },
+  {
+    id: 'res-004', code: 'ST-26004', accommodationId: 'acc-glamping', accommodationName: 'Domo Aurora',
+    guest: { fullName: 'Daniela Torres', email: 'daniela@example.com', phone: '301 440 2201', documentNumber: '1023987654' },
+    checkIn: isoFromToday(-1), checkOut: isoFromToday(1), adults: 2, children: 0, status: 'CHECKED_IN',
+    price: { nights: 2, weekdayNights: 2, weekendNights: 0, accommodationSubtotal: 820000, cleaningFee: 70000, serviceFee: 24600, total: 914600 },
+    amountPaid: 914600, balance: 0, notes: 'Llegada confirmada por WhatsApp.', createdAt: new Date().toISOString()
   }
 ];
 
@@ -99,5 +106,13 @@ export const DEMO_PAYMENTS: Payment[] = [
   {
     id: 'pay-002', reservationId: 'res-003', reservationCode: 'ST-26003', guestName: 'Mariana López', amount: 914600,
     method: 'BANK_TRANSFER', status: 'APPROVED', reference: 'TR-184039', paidAt: new Date(Date.now() - 7 * 86400000).toISOString()
+  },
+  {
+    id: 'pay-003', reservationId: 'res-002', reservationCode: 'ST-26002', guestName: 'Santiago Ruiz', amount: 500000,
+    method: 'NEQUI', status: 'PENDING', reference: 'NQ-560214', submittedAt: new Date().toISOString(), paidAt: null
+  },
+  {
+    id: 'pay-004', reservationId: 'res-004', reservationCode: 'ST-26004', guestName: 'Daniela Torres', amount: 914600,
+    method: 'CARD', status: 'APPROVED', reference: 'CARD-DEMO-104', paidAt: new Date(Date.now() - 2 * 86400000).toISOString()
   }
 ];
