@@ -12,12 +12,12 @@ export const DEMO_PROPERTIES: Property[] = [
     id: 'prop-bosque', name: 'Reserva Refugios del Bosque', slug: 'reserva-refugios-del-bosque',
     location: 'Guatapé, Antioquia',
     description: 'Un refugio privado entre montañas, bosque nativo y vistas al embalse.',
-    imageUrl: 'https://images.unsplash.com/photo-1449158743715-0a90ebb6d2d8?auto=format&fit=crop&w=1600&q=85', active: true
+    imageUrl: 'https://images.unsplash.com/photo-1449158743715-0a90ebb6d2d8?auto=format&fit=crop&fm=webp&w=1200&q=68', active: true
   },
   {
     id: 'prop-cafe', name: 'Mirador del Café', slug: 'mirador-del-cafe', location: 'Salento, Quindío',
     description: 'Arquitectura tradicional, cafetales y descanso con vista a la cordillera.',
-    imageUrl: 'https://images.unsplash.com/photo-1520984032042-162d526883e0?auto=format&fit=crop&w=1600&q=85', active: true
+    imageUrl: 'https://images.unsplash.com/photo-1520984032042-162d526883e0?auto=format&fit=crop&fm=webp&w=1200&q=68', active: true
   }
 ];
 
@@ -27,21 +27,21 @@ export const DEMO_ACCOMMODATIONS: Accommodation[] = [
     name: 'Cabaña Nido', type: 'CABIN', description: 'Cabaña íntima con jacuzzi, chimenea y terraza privada frente al bosque.',
     capacity: 2, bedrooms: 1, bathrooms: 1, baseNightPrice: 360000, weekendNightPrice: 430000, cleaningFee: 65000,
     status: 'ACTIVE', amenities: ['Jacuzzi', 'Chimenea', 'Desayuno', 'Wi-Fi', 'Parqueadero'],
-    imageUrl: 'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=1400&q=85'
+    imageUrl: 'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&fm=webp&w=960&q=68'
   },
   {
     id: 'acc-familiar', propertyId: 'prop-bosque', propertyName: 'Reserva Refugios del Bosque', propertyLocation: 'Guatapé, Antioquia',
     name: 'Cabaña Roble', type: 'COUNTRY_HOUSE', description: 'Espacio familiar amplio con cocina, fogata y sendero privado.',
     capacity: 6, bedrooms: 3, bathrooms: 2, baseNightPrice: 620000, weekendNightPrice: 740000, cleaningFee: 95000,
     status: 'ACTIVE', amenities: ['Cocina', 'Fogata', 'BBQ', 'Wi-Fi', 'Pet friendly'],
-    imageUrl: 'https://images.unsplash.com/photo-1473445361085-b9a07f55608b?auto=format&fit=crop&w=1400&q=85'
+    imageUrl: 'https://images.unsplash.com/photo-1473445361085-b9a07f55608b?auto=format&fit=crop&fm=webp&w=960&q=68'
   },
   {
     id: 'acc-glamping', propertyId: 'prop-cafe', propertyName: 'Mirador del Café', propertyLocation: 'Salento, Quindío',
     name: 'Domo Aurora', type: 'GLAMPING', description: 'Domo panorámico para ver las estrellas, con baño privado y desayuno local.',
     capacity: 3, bedrooms: 1, bathrooms: 1, baseNightPrice: 410000, weekendNightPrice: 485000, cleaningFee: 70000,
     status: 'ACTIVE', amenities: ['Vista panorámica', 'Desayuno', 'Minibar', 'Wi-Fi', 'Hamaca'],
-    imageUrl: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&w=1400&q=85'
+    imageUrl: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&fm=webp&w=960&q=68'
   }
 ];
 

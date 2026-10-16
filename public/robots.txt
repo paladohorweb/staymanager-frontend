@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /login
+Disallow: /mis-reservas
+Disallow: /mi-reserva
+Disallow: /reservar/
+
+Sitemap: https://staymanager-demo-jgmsolutions.netlify.app/sitemap.xml

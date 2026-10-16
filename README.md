@@ -126,12 +126,25 @@ Netlify reemplaza el archivo de entorno durante `build:demo`. No se detecta el m
 - Dashboard e indicadores.
 - Dashboard operativo con ocupación, ingresos del mes, llegadas, salidas y huéspedes alojados.
 - Portal del huésped para consultar fechas, pagos, saldo, estado y cancelar cuando aplique.
+- Secciones **Mis reservas** y **Mis experiencias** con solicitudes contextuales por WhatsApp.
+- Preparación del mensaje de comprobante de pago para enviarlo por WhatsApp; el administrador conserva la aprobación del saldo.
 - Centro administrativo de notificaciones con contador de no leídas.
 - Acceso contextual y flotante a WhatsApp.
 - Cambios de estado de reservas.
 - Creación de alojamientos.
 - Registro de pagos y actualización de saldos.
 - Persistencia y restauración del conjunto inicial.
+
+## SEO, privacidad y analítica
+
+- Los títulos, descripciones, canonical, Open Graph y directivas `robots` cambian según la ruta.
+- `public/sitemap.xml` y `public/robots.txt` se publican automáticamente.
+- El favicon SVG representa una cabaña en el bosque.
+- Aviso legal, política de privacidad, política de cookies y banner de consentimiento incluidos.
+- Google Analytics se carga únicamente después del consentimiento. Para activarlo, asigna el ID real de GA4 en `analyticsMeasurementId` dentro del archivo de entorno que vayas a compilar. Déjalo vacío en desarrollo si no deseas enviar métricas.
+- En compilaciones productivas el navegador redirige HTTP a HTTPS; Netlify agrega HSTS y cabeceras de seguridad.
+
+Los textos legales son una base técnica. Antes de producción, cada alojamiento debe completar su identificación, canales formales, políticas de cancelación y responsable de tratamiento.
 
 ## Seguridad y alcance
 

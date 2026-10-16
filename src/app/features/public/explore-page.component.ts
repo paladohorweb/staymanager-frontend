@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AlertService } from '../../core/services/alert.service';
 import { StayManagerApiService } from '../../core/services/staymanager-api.service';
-import { currency } from '../../shared/utils/format.utils';
+import { currency, optimizedImageUrl } from '../../shared/utils/format.utils';
 
 @Component({
   selector: 'app-explore-page',
@@ -22,7 +22,7 @@ import { currency } from '../../shared/utils/format.utils';
         <div class="explore-grid">
           @for (item of results(); track item.id) {
             <article class="horizontal-stay-card">
-              <div class="horizontal-image" [style.background-image]="'url(' + item.imageUrl + ')'">
+              <div class="horizontal-image" [style.background-image]="'url(' + image(item.imageUrl, 900) + ')'">
                 @if (checkIn && checkOut) { <span class="availability-badge">✓ Disponible</span> }
               </div>
               <div class="horizontal-body">
@@ -47,6 +47,7 @@ export class ExplorePageComponent {
   readonly unavailableIds = signal(new Set<string>());
   readonly checking = signal(false);
   readonly money = currency;
+  readonly image = optimizedImageUrl;
   readonly results = computed(() => {
     this.refreshToken();
     return this.store.activeAccommodations().filter((item) =>

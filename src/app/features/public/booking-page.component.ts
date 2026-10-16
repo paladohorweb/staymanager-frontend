@@ -5,7 +5,7 @@ import { BookingRequest, PriceBreakdown } from '../../core/models/domain.models'
 import { AlertService } from '../../core/services/alert.service';
 import { ApiErrorService } from '../../core/services/api-error.service';
 import { StayManagerApiService } from '../../core/services/staymanager-api.service';
-import { currency } from '../../shared/utils/format.utils';
+import { currency, optimizedImageUrl } from '../../shared/utils/format.utils';
 
 @Component({
   selector: 'app-booking-page',
@@ -20,6 +20,7 @@ import { currency } from '../../shared/utils/format.utils';
           <div class="booking-grid">
             <form class="booking-form card-panel" #bookingForm="ngForm" (ngSubmit)="submit()">
               <h2>Planea tu estadía</h2>
+              <div class="honeypot" aria-hidden="true"><label>No completar<input name="website" [(ngModel)]="website" tabindex="-1" autocomplete="off"></label></div>
               <div class="form-grid two">
                 <label>Fecha de entrada<input type="date" name="checkIn" [(ngModel)]="request.checkIn" [min]="today" required (ngModelChange)="calculate()"></label>
                 <label>Fecha de salida<input type="date" name="checkOut" [(ngModel)]="request.checkOut" [min]="request.checkIn || today" required (ngModelChange)="calculate()"></label>
@@ -34,14 +35,14 @@ import { currency } from '../../shared/utils/format.utils';
                 <label>Teléfono<input name="phone" [(ngModel)]="request.guest.phone" required placeholder="300 000 0000"></label>
               </div>
               <label>Solicitudes especiales<textarea name="notes" [(ngModel)]="request.notes" rows="3" placeholder="Cuéntanos cómo podemos preparar tu llegada"></textarea></label>
-              <label class="check-label"><input type="checkbox" name="terms" [(ngModel)]="termsAccepted" required> Acepto las políticas de reserva, tratamiento de datos y cancelación.</label>
+              <label class="check-label"><input type="checkbox" name="terms" [(ngModel)]="termsAccepted" required> Acepto el <a routerLink="/aviso-legal" target="_blank">aviso legal</a>, la <a routerLink="/politica-privacidad" target="_blank">política de privacidad</a> y las condiciones de cancelación del alojamiento.</label>
               @if (error()) { <div class="alert alert-danger py-2" role="alert">{{ error() }}</div> }
               <button class="btn btn-primary btn-block" type="submit" [disabled]="bookingForm.invalid || !quote() || submitting()">
                 @if (submitting()) { <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span> } Solicitar reserva →
               </button>
             </form>
             <aside class="booking-summary card-panel">
-              <div class="summary-image" [style.background-image]="'url(' + item.imageUrl + ')'" ></div>
+              <div class="summary-image" [style.background-image]="'url(' + image(item.imageUrl, 760) + ')'" ></div>
               <h3>{{ item.name }}</h3><p>{{ item.description }}</p>
               <div class="amenity-row"><span>♙ {{ item.capacity }} huéspedes</span><span>⌂ {{ item.bedrooms }} habitación</span></div>
               @if (quote(); as price) {
@@ -57,6 +58,7 @@ import { currency } from '../../shared/utils/format.utils';
 export class BookingPageComponent {
   readonly today = new Date().toISOString().slice(0, 10);
   readonly money = currency;
+  readonly image = optimizedImageUrl;
   readonly accommodationId: string;
   readonly accommodation = computed(() => this.store.accommodationById(this.accommodationId));
   readonly quote = signal<PriceBreakdown | null>(null);
@@ -64,8 +66,10 @@ export class BookingPageComponent {
   readonly calculating = signal(false);
   readonly submitting = signal(false);
   termsAccepted = false;
+  website = '';
   request: BookingRequest;
   private quoteRequest = 0;
+  private readonly formStartedAt = Date.now();
 
   constructor(
     readonly store: StayManagerApiService,
@@ -117,9 +121,10 @@ export class BookingPageComponent {
     this.submitting.set(true);
     try {
       if (!this.termsAccepted) throw new Error('Debes aceptar las políticas para continuar.');
+      if (this.website.trim() || Date.now() - this.formStartedAt < 1500) throw new Error('No fue posible validar el formulario. Intenta nuevamente.');
       const reservation = await this.store.createReservation(this.request);
       await this.alerts.success('Reserva solicitada', `Tu código es ${reservation.code}. Consérvalo para identificar tu solicitud.`);
-      await this.router.navigate(['/mi-reserva'], { queryParams: { code: reservation.code, email: reservation.guest.email } });
+      await this.router.navigate(['/mis-reservas'], { queryParams: { code: reservation.code, email: reservation.guest.email } });
     } catch (error) {
       const message = this.errors.message(error, 'No fue posible crear la reserva.');
       this.error.set(message);

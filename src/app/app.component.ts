@@ -1,10 +1,14 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { SeoService } from './core/services/seo.service';
+import { CookieConsentComponent } from './shared/components/cookie-consent.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet],
-  template: '<router-outlet />'
+  imports: [RouterOutlet, CookieConsentComponent],
+  template: '<router-outlet /><app-cookie-consent />'
 })
-export class AppComponent {}
+export class AppComponent {
+  constructor(_seo: SeoService) {}
+}

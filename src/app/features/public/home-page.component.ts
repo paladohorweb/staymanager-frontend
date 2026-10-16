@@ -2,7 +2,7 @@ import { Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { StayManagerApiService } from '../../core/services/staymanager-api.service';
-import { currency } from '../../shared/utils/format.utils';
+import { currency, optimizedImageUrl } from '../../shared/utils/format.utils';
 
 @Component({
   selector: 'app-home-page',
@@ -33,7 +33,7 @@ import { currency } from '../../shared/utils/format.utils';
         <div class="accommodation-grid">
           @for (item of featured(); track item.id) {
             <article class="stay-card">
-              <div class="stay-image" [style.background-image]="'url(' + item.imageUrl + ')'">
+              <div class="stay-image" [style.background-image]="'url(' + image(item.imageUrl, 760) + ')'">
                 <span class="card-badge">{{ item.type === 'GLAMPING' ? 'Glamping' : 'Cabaña' }}</span>
                 <button class="favorite" type="button" aria-label="Guardar">♡</button>
               </div>
@@ -74,6 +74,7 @@ export class HomePageComponent {
   readonly featured = computed(() => this.store.activeAccommodations().slice(0, 3));
   readonly searchTouched = signal(false);
   readonly money = currency;
+  readonly image = optimizedImageUrl;
 
   constructor(readonly store: StayManagerApiService, private readonly router: Router) {}
 

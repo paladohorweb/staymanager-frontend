@@ -1,0 +1,22 @@
+import { Component } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { environment } from '../../../environments/environment';
+
+@Component({
+  selector: 'app-experiences-page', standalone: true, imports: [RouterLink],
+  template: `
+    <section class="experience-hero"><div class="container"><span class="eyebrow light">EXPERIENCIAS LOCALES</span><h1>Tu viaje empieza fuera de la habitación</h1><p>Ideas seleccionadas para conectar con el paisaje, la cultura y las personas de cada destino.</p></div></section>
+    <section class="section"><div class="container"><div class="section-heading"><div><span class="eyebrow">PARA RECORDAR</span><h2>Elige cómo quieres vivir tu estadía</h2></div><p>Consulta disponibilidad directamente con el alojamiento.</p></div><div class="experience-cards">@for(item of experiences;track item.title){<article class="experience-card"><div class="experience-card-image"><img [src]="item.image" [alt]="item.title" loading="lazy" decoding="async" width="720" height="480"><span>{{item.duration}}</span></div><div><small>{{item.category}}</small><h3>{{item.title}}</h3><p>{{item.description}}</p><a [href]="whatsapp(item.title)" target="_blank" rel="noopener noreferrer" class="text-link">Consultar por WhatsApp →</a></div></article>}</div><div class="experience-cta"><div><span class="eyebrow light">¿YA TIENES RESERVA?</span><h2>Organiza tus experiencias desde tu portal</h2><p>Ingresa con tu código y correo para llevar una solicitud lista a WhatsApp.</p></div><a routerLink="/mis-reservas" class="btn btn-light">Ir a Mis reservas</a></div></div></section>
+  `,
+  styles: [`
+    .experience-hero{padding:10rem 0 6rem;color:#fff;background:linear-gradient(90deg,rgba(5,34,29,.9),rgba(5,34,29,.28)),url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&fm=webp&w=1800&q=70') center/cover}.experience-hero h1{max-width:760px;font:400 clamp(3rem,7vw,6rem) Georgia,serif;line-height:1}.experience-hero p{max-width:620px;color:#dceae6}.experience-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem}.experience-card{overflow:hidden;border:1px solid var(--line);border-radius:16px;background:#fff}.experience-card-image{height:230px;position:relative;overflow:hidden}.experience-card-image img{width:100%;height:100%;object-fit:cover;transition:transform .5s ease}.experience-card:hover img{transform:scale(1.04)}.experience-card-image span{position:absolute;right:.8rem;top:.8rem;padding:.35rem .55rem;border-radius:999px;background:rgba(5,34,29,.86);color:#fff;font-size:.62rem;font-weight:800}.experience-card>div:last-child{padding:1.25rem}.experience-card small{color:var(--primary);font-weight:800}.experience-card h3{font:400 1.45rem Georgia,serif;margin:.35rem 0}.experience-card p{font-size:.75rem}.experience-cta{margin-top:3rem;padding:clamp(1.5rem,5vw,3.2rem);display:flex;justify-content:space-between;align-items:center;gap:2rem;border-radius:20px;color:#fff;background:#0b3a32}.experience-cta p{color:#c9ddd7;margin:0}@media(max-width:900px){.experience-cards{grid-template-columns:1fr 1fr}}@media(max-width:620px){.experience-cards{grid-template-columns:1fr}.experience-cta{align-items:flex-start;flex-direction:column}.experience-cta .btn{width:100%}}
+  `]
+})
+export class ExperiencesPageComponent {
+  readonly experiences = [
+    { category: 'BIENESTAR', title: 'Desayuno entre montañas', duration: '2 horas', description: 'Sabores locales servidos con calma y una vista que merece madrugar.', image: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&fm=webp&w=900&q=68' },
+    { category: 'NATURALEZA', title: 'Sendero y bosque nativo', duration: '3 horas', description: 'Caminata guiada para reconocer el territorio y respirar lejos del ruido.', image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&fm=webp&w=900&q=68' },
+    { category: 'CELEBRACIONES', title: 'Noche romántica', duration: 'A tu medida', description: 'Decoración, detalles y una atmósfera preparada para celebrar algo importante.', image: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&fm=webp&w=900&q=68' }
+  ];
+  whatsapp(experience: string): string { return `https://wa.me/${environment.whatsappNumber}?text=${encodeURIComponent(`Hola, quiero consultar la experiencia “${experience}” para mi estadía.`)}`; }
+}

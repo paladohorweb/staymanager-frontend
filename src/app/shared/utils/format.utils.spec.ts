@@ -1,4 +1,4 @@
-import { currency, shortDate } from './format.utils';
+import { currency, optimizedImageUrl, shortDate } from './format.utils';
 
 describe('format utilities', () => {
   it('formats Colombian pesos without decimal places', () => {
@@ -11,5 +11,12 @@ describe('format utilities', () => {
     expect(formatted).toContain('15');
     expect(formatted).toContain('oct');
     expect(formatted).toContain('2026');
+  });
+
+  it('requests optimized WebP images from Unsplash', () => {
+    const result = optimizedImageUrl('https://images.unsplash.com/photo-example?q=95', 720);
+    expect(result).toContain('fm=webp');
+    expect(result).toContain('w=720');
+    expect(result).toContain('q=68');
   });
 });
