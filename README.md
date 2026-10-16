@@ -124,6 +124,10 @@ Netlify reemplaza el archivo de entorno durante `build:demo`. No se detecta el m
 - Creación de reservas.
 - Login administrativo.
 - Dashboard e indicadores.
+- Dashboard operativo con ocupación, ingresos del mes, llegadas, salidas y huéspedes alojados.
+- Portal del huésped para consultar fechas, pagos, saldo, estado y cancelar cuando aplique.
+- Centro administrativo de notificaciones con contador de no leídas.
+- Acceso contextual y flotante a WhatsApp.
 - Cambios de estado de reservas.
 - Creación de alojamientos.
 - Registro de pagos y actualización de saldos.
@@ -134,3 +138,4 @@ Netlify reemplaza el archivo de entorno durante `build:demo`. No se detecta el m
 El modo demo no debe utilizarse para información real: sus datos y sesión existen únicamente en el navegador. El modo local sí delega reglas, seguridad y persistencia en Spring Boot.
 
 Angular 17.3.12 se conserva por requisito del proyecto. Esta rama tiene avisos de seguridad publicados sin corrección disponible dentro de Angular 17, por lo que la actualización de versión mayor debe mantenerse en el roadmap antes de una salida productiva.
+

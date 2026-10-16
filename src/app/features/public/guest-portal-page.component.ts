@@ -6,6 +6,7 @@ import { AlertService } from '../../core/services/alert.service';
 import { ApiErrorService } from '../../core/services/api-error.service';
 import { StayManagerApiService } from '../../core/services/staymanager-api.service';
 import { currency, shortDate } from '../../shared/utils/format.utils';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-guest-portal-page',
@@ -108,5 +109,5 @@ export class GuestPortalPageComponent {
   reset(): void { this.reservation.set(null); this.error.set(''); }
   firstName(name: string): string { return name.trim().split(/\s+/)[0]; }
   statusLabel(status: ReservationStatus): string { return ({ PENDING_PAYMENT:'Pendiente de pago', CONFIRMED:'Confirmada', CHECKED_IN:'En estadía', CHECKED_OUT:'Finalizada', CANCELLED:'Cancelada', EXPIRED:'Expirada', NO_SHOW:'No se presentó', QUOTED:'Cotización' } as Record<ReservationStatus,string>)[status]; }
-  whatsapp(item: GuestPortalReservation): string { return `https://wa.me/573233098671?text=${encodeURIComponent(`Hola, necesito ayuda con mi reserva ${item.code}.`)}`; }
+  whatsapp(item: GuestPortalReservation): string { return `https://wa.me/${environment.whatsappNumber}?text=${encodeURIComponent(`Hola, necesito ayuda con mi reserva ${item.code}.`)}`; }
 }
