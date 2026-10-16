@@ -198,6 +198,37 @@ export interface AppNotification {
   createdAt: string;
 }
 
+export interface OrganizationSettings {
+  organizationName: string;
+  organizationSlug: string;
+  whatsappNumber: string;
+  checkInTime: string;
+  checkOutTime: string;
+  mapLabel: string;
+  mapAddress: string;
+  mapLatitude: number | null;
+  mapLongitude: number | null;
+  arrivalInstructions: string;
+}
+
+export type HousekeepingStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'INSPECTED';
+
+export interface HousekeepingTask {
+  id: string;
+  reservationId: string;
+  reservationCode: string;
+  accommodationId: string;
+  accommodationName: string;
+  guestName: string;
+  checkOut: string;
+  taskDate: string;
+  status: HousekeepingStatus;
+  assignedTo: string | null;
+  notes: string | null;
+  completedAt: string | null;
+  updatedAt: string;
+}
+
 export interface ApiProblem {
   detail?: string;
   title?: string;

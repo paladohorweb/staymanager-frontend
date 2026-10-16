@@ -33,6 +33,7 @@ import { FloatingWhatsappComponent } from '../shared/components/floating-whatsap
           <a routerLink="/alojamientos" routerLinkActive="active" (click)="closeMenu()">Alojamientos</a>
           <a routerLink="/mis-reservas" routerLinkActive="active" (click)="closeMenu()">Mis reservas</a>
           <a routerLink="/experiencias" routerLinkActive="active" (click)="closeMenu()">Experiencias</a>
+          <a routerLink="/como-llegar" routerLinkActive="active" (click)="closeMenu()">Cómo llegar</a>
           <a routerLink="/login" class="btn btn-outline btn-small" (click)="closeMenu()">Panel administrativo</a>
         </nav>
       </div>
@@ -42,7 +43,7 @@ import { FloatingWhatsappComponent } from '../shared/components/floating-whatsap
     <footer class="public-footer">
       <div class="container footer-grid">
         <div><a routerLink="/" class="brand brand-light"><span class="brand-mark">S</span><span><strong>Stay</strong>Manager</span></a><p>Tecnología para alojamientos memorables y operaciones rentables.</p></div>
-        <div><h4>Explora</h4><a routerLink="/alojamientos">Alojamientos</a><a routerLink="/experiencias">Experiencias</a><a routerLink="/mis-reservas">Mis reservas</a><a routerLink="/login">Acceso administrativo</a></div>
+        <div><h4>Explora</h4><a routerLink="/alojamientos">Alojamientos</a><a routerLink="/experiencias">Experiencias</a><a routerLink="/como-llegar">Cómo llegar</a><a routerLink="/mis-reservas">Mis reservas</a><a routerLink="/login">Acceso administrativo</a></div>
         <div><h4>Información</h4><a routerLink="/aviso-legal">Aviso legal</a><a routerLink="/politica-privacidad">Privacidad</a><a routerLink="/politica-cookies">Cookies</a></div>
         <div><h4>Contacto</h4><span>Colombia</span><a [href]="whatsappUrl" target="_blank" rel="noopener noreferrer">+57 323 309 8671</a><span>Atención por WhatsApp</span></div>
       </div>

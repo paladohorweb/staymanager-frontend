@@ -1,10 +1,23 @@
-import { Accommodation, Payment, Property, Reservation } from '../models/domain.models';
+import { Accommodation, OrganizationSettings, Payment, Property, Reservation } from '../models/domain.models';
 
 const isoFromToday = (days: number): string => {
   const date = new Date();
   date.setHours(12, 0, 0, 0);
   date.setDate(date.getDate() + days);
   return date.toISOString().slice(0, 10);
+};
+
+export const DEMO_SETTINGS: OrganizationSettings = {
+  organizationName: 'Refugios del Bosque',
+  organizationSlug: 'refugios-del-bosque',
+  whatsappNumber: '573233098671',
+  checkInTime: '15:00',
+  checkOutTime: '11:00',
+  mapLabel: 'Reserva Refugios del Bosque',
+  mapAddress: 'Guatapé, Antioquia, Colombia',
+  mapLatitude: 6.232584,
+  mapLongitude: -75.158989,
+  arrivalInstructions: 'Al llegar a Guatapé, continúa por la vía principal y confirma tu hora de llegada por WhatsApp. Te enviaremos el punto exacto y las instrucciones de acceso.'
 };
 
 export const DEMO_PROPERTIES: Property[] = [

@@ -88,9 +88,9 @@ import { currency, shortDate } from '../../shared/utils/format.utils';
       <article class="panel quick-panel">
         <div class="panel-heading"><div><h2>Acciones rápidas</h2><p>Atajos para la operación diaria.</p></div></div>
         <div class="quick-grid">
-          <a routerLink="/admin/reservas"><span>＋</span>Crear reserva</a>
-          <a routerLink="/admin/pagos"><span>$</span>Registrar pago</a>
-          <a routerLink="/admin/alojamientos"><span>⌁</span>Nuevo alojamiento</a>
+          <a routerLink="/admin/operacion"><span class="bi bi-box-arrow-in-right"></span>Gestionar llegadas</a>
+          <a routerLink="/admin/limpieza"><span class="bi bi-stars"></span>Coordinar limpieza</a>
+          <a routerLink="/admin/configuracion"><span class="bi bi-geo-alt"></span>Configurar ubicación</a>
           @if (store.isDemoMode) {
             <button type="button" (click)="resetDemo()"><span class="bi bi-arrow-counterclockwise"></span>Restaurar demo</button>
           } @else {

@@ -9,6 +9,9 @@ import {
   DashboardSummary,
   GuestPaymentReport,
   GuestPortalReservation,
+  HousekeepingStatus,
+  HousekeepingTask,
+  OrganizationSettings,
   Payment,
   PaymentMethod,
   PriceBreakdown,
@@ -19,7 +22,7 @@ import {
 } from '../models/domain.models';
 import { ApiErrorService } from './api-error.service';
 import { environment } from '../../../environments/environment';
-import { DEMO_ACCOMMODATIONS, DEMO_PAYMENTS, DEMO_PROPERTIES, DEMO_RESERVATIONS } from '../data/demo.seed';
+import { DEMO_ACCOMMODATIONS, DEMO_PAYMENTS, DEMO_PROPERTIES, DEMO_RESERVATIONS, DEMO_SETTINGS } from '../data/demo.seed';
 
 type AccommodationPayload = Omit<Accommodation, 'id' | 'propertyName' | 'propertyLocation'>;
 
@@ -31,7 +34,9 @@ export class StayManagerApiService {
     properties: 'staymanager.demo.properties',
     accommodations: 'staymanager.demo.accommodations',
     reservations: 'staymanager.demo.reservations',
-    payments: 'staymanager.demo.payments'
+    payments: 'staymanager.demo.payments',
+    settings: 'staymanager.demo.settings',
+    housekeeping: 'staymanager.demo.housekeeping'
   };
 
   readonly isDemoMode = environment.demoMode;
@@ -42,6 +47,8 @@ export class StayManagerApiService {
   readonly payments = signal<Payment[]>([]);
   readonly dashboard = signal<DashboardSummary | null>(null);
   readonly notifications = signal<AppNotification[]>([]);
+  readonly settings = signal<OrganizationSettings | null>(null);
+  readonly housekeeping = signal<HousekeepingTask[]>([]);
   readonly unreadNotifications = computed(() => this.notifications().filter((item) => !item.readAt).length);
   readonly loading = signal(false);
   readonly error = signal('');
@@ -63,10 +70,12 @@ export class StayManagerApiService {
     }
     this.loading.set(true);
     this.error.set('');
-    this.publicLoad = firstValueFrom(
-      this.http.get<Accommodation[]>(`${this.api}/public/organizations/refugios-del-bosque/accommodations`)
-    ).then((items) => {
+    this.publicLoad = Promise.all([
+      firstValueFrom(this.http.get<Accommodation[]>(`${this.api}/public/organizations/refugios-del-bosque/accommodations`)),
+      firstValueFrom(this.http.get<OrganizationSettings>(`${this.api}/public/organizations/refugios-del-bosque/settings`))
+    ]).then(([items, settings]) => {
       this.accommodations.set(items.map((item) => this.normalizeAccommodation(item)));
+      this.settings.set(this.normalizeSettings(settings));
       const inferred = new Map<string, Property>();
       for (const item of items) {
         if (!inferred.has(item.propertyId)) {
@@ -96,13 +105,15 @@ export class StayManagerApiService {
     this.loading.set(true);
     this.error.set('');
     try {
-      const [properties, accommodations, reservations, payments, dashboard, notifications] = await Promise.all([
+      const [properties, accommodations, reservations, payments, dashboard, notifications, settings, housekeeping] = await Promise.all([
         firstValueFrom(this.http.get<Property[]>(`${this.api}/admin/properties`)),
         firstValueFrom(this.http.get<Accommodation[]>(`${this.api}/admin/accommodations`)),
         firstValueFrom(this.http.get<Reservation[]>(`${this.api}/admin/reservations`)),
         firstValueFrom(this.http.get<Payment[]>(`${this.api}/admin/payments`)),
         firstValueFrom(this.http.get<DashboardSummary>(`${this.api}/admin/dashboard`)),
-        firstValueFrom(this.http.get<AppNotification[]>(`${this.api}/admin/notifications`))
+        firstValueFrom(this.http.get<AppNotification[]>(`${this.api}/admin/notifications`)),
+        firstValueFrom(this.http.get<OrganizationSettings>(`${this.api}/admin/settings`)),
+        firstValueFrom(this.http.get<HousekeepingTask[]>(`${this.api}/admin/housekeeping`))
       ]);
       this.properties.set(properties);
       this.accommodations.set(accommodations.map((item) => this.normalizeAccommodation(item)));
@@ -110,6 +121,8 @@ export class StayManagerApiService {
       this.payments.set(payments);
       this.dashboard.set(dashboard);
       this.notifications.set(notifications);
+      this.settings.set(this.normalizeSettings(settings));
+      this.housekeeping.set(housekeeping);
     } catch (error) {
       this.error.set(this.errors.message(error, 'No fue posible cargar el panel administrativo.'));
       throw error;
@@ -240,6 +253,7 @@ export class StayManagerApiService {
       const updated = { ...current, status };
       this.reservations.update((items) => items.map((item) => item.id === id ? updated : item));
       this.persistDemo(this.demoKeys.reservations, this.reservations());
+      this.syncDemoHousekeeping();
       this.updateDemoDashboard();
       return updated;
     }
@@ -250,6 +264,60 @@ export class StayManagerApiService {
     this.reservations.update((items) => items.map((item) => item.id === id ? normalized : item));
     await this.refreshDashboard();
     return normalized;
+  }
+
+  async updateSettings(settings: OrganizationSettings): Promise<OrganizationSettings> {
+    if (this.isDemoMode) {
+      const updated = this.normalizeSettings(settings);
+      this.settings.set(updated);
+      this.persistDemo(this.demoKeys.settings, updated);
+      return updated;
+    }
+    const updated = await firstValueFrom(this.http.put<OrganizationSettings>(`${this.api}/admin/settings`, {
+      whatsappNumber: settings.whatsappNumber,
+      checkInTime: settings.checkInTime,
+      checkOutTime: settings.checkOutTime,
+      mapLabel: settings.mapLabel,
+      mapAddress: settings.mapAddress,
+      mapLatitude: settings.mapLatitude,
+      mapLongitude: settings.mapLongitude,
+      arrivalInstructions: settings.arrivalInstructions
+    }));
+    const normalized = this.normalizeSettings(updated);
+    this.settings.set(normalized);
+    return normalized;
+  }
+
+  async updateHousekeeping(
+    id: string, status: HousekeepingStatus, assignedTo: string, notes: string
+  ): Promise<HousekeepingTask> {
+    if (this.isDemoMode) {
+      const current = this.housekeeping().find((item) => item.id === id);
+      if (!current) throw new Error('Tarea de limpieza no encontrada.');
+      const completed = status === 'COMPLETED' || status === 'INSPECTED';
+      const updated: HousekeepingTask = {
+        ...current, status, assignedTo: assignedTo.trim() || null, notes: notes.trim() || null,
+        completedAt: completed ? current.completedAt ?? new Date().toISOString() : null,
+        updatedAt: new Date().toISOString()
+      };
+      this.housekeeping.update((items) => items.map((item) => item.id === id ? updated : item));
+      this.persistDemo(this.demoKeys.housekeeping, this.housekeeping());
+      return updated;
+    }
+    const updated = await firstValueFrom(this.http.patch<HousekeepingTask>(`${this.api}/admin/housekeeping/${id}`, {
+      status, assignedTo: assignedTo.trim(), notes: notes.trim()
+    }));
+    this.housekeeping.update((items) => items.map((item) => item.id === id ? updated : item));
+    return updated;
+  }
+
+  async refreshHousekeeping(): Promise<void> {
+    if (this.isDemoMode) {
+      this.syncDemoHousekeeping();
+      return;
+    }
+    const tasks = await firstValueFrom(this.http.get<HousekeepingTask[]>(`${this.api}/admin/housekeeping`));
+    this.housekeeping.set(tasks);
   }
 
   async registerPayment(reservationId: string, amount: number, method: PaymentMethod, reference: string, idempotencyKey: string = crypto.randomUUID()): Promise<Payment> {
@@ -387,6 +455,20 @@ export class StayManagerApiService {
     } };
   }
 
+  private normalizeSettings(item: OrganizationSettings): OrganizationSettings {
+    return {
+      ...item,
+      whatsappNumber: item.whatsappNumber ?? '',
+      checkInTime: item.checkInTime || '15:00',
+      checkOutTime: item.checkOutTime || '11:00',
+      mapLabel: item.mapLabel ?? '',
+      mapAddress: item.mapAddress ?? '',
+      mapLatitude: item.mapLatitude === null || item.mapLatitude === undefined ? null : Number(item.mapLatitude),
+      mapLongitude: item.mapLongitude === null || item.mapLongitude === undefined ? null : Number(item.mapLongitude),
+      arrivalInstructions: item.arrivalInstructions ?? ''
+    };
+  }
+
   private normalizeGuestPortal(item: GuestPortalReservation): GuestPortalReservation {
     return {
       ...item, amountPaid: Number(item.amountPaid), balance: Number(item.balance),
@@ -436,12 +518,39 @@ export class StayManagerApiService {
     this.accommodations.set(this.loadDemo(this.demoKeys.accommodations, DEMO_ACCOMMODATIONS));
     this.reservations.set(this.loadDemo(this.demoKeys.reservations, DEMO_RESERVATIONS));
     this.payments.set(this.loadDemo(this.demoKeys.payments, DEMO_PAYMENTS));
+    this.settings.set(this.normalizeSettings(this.loadDemo(this.demoKeys.settings, DEMO_SETTINGS)));
+    this.syncDemoHousekeeping();
     this.notifications.set([
       { id: 'demo-reservation', type: 'RESERVATION', title: 'Nueva reserva demo', message: 'María solicitó Cabaña Mirador.', link: '/admin/reservas', readAt: null, createdAt: new Date().toISOString() },
       { id: 'demo-payment', type: 'PAYMENT', title: 'Pago validado', message: 'Se registró un anticipo de una reserva.', link: '/admin/pagos', readAt: null, createdAt: new Date(Date.now() - 3600000).toISOString() }
     ]);
     this.error.set('');
     this.updateDemoDashboard();
+  }
+
+  private syncDemoHousekeeping(): void {
+    const existing = this.loadDemo<HousekeepingTask[]>(this.demoKeys.housekeeping, []);
+    const next = [...existing];
+    for (const reservation of this.reservations().filter((item) => item.status === 'CHECKED_OUT')) {
+      if (next.some((item) => item.reservationId === reservation.id)) continue;
+      next.push({
+        id: `clean-${reservation.id}`,
+        reservationId: reservation.id,
+        reservationCode: reservation.code,
+        accommodationId: reservation.accommodationId,
+        accommodationName: reservation.accommodationName,
+        guestName: reservation.guest.fullName,
+        checkOut: reservation.checkOut,
+        taskDate: reservation.checkOut,
+        status: 'PENDING',
+        assignedTo: null,
+        notes: null,
+        completedAt: null,
+        updatedAt: new Date().toISOString()
+      });
+    }
+    this.housekeeping.set(next);
+    this.persistDemo(this.demoKeys.housekeeping, next);
   }
 
   private demoAvailability(accommodationId: string, checkIn: string, checkOut: string): boolean {

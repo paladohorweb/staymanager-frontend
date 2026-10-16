@@ -131,9 +131,18 @@ Netlify reemplaza el archivo de entorno durante `build:demo`. No se detecta el m
 - Centro administrativo de notificaciones con contador de no leídas.
 - Acceso contextual y flotante a WhatsApp.
 - Cambios de estado de reservas.
+- Centro operativo dedicado para check-in y check-out, con mensajes contextuales de WhatsApp.
+- Tablero de limpieza con asignación, notas, ejecución e inspección; la tarea aparece al completar el check-out.
+- Sidebar administrativo contraíble en escritorio y menú con cierre por fondo en móvil.
+- Configuración central de horarios, WhatsApp, instrucciones de llegada y ubicación.
+- Página pública **Cómo llegar** con mapa y navegación de Google Maps.
 - Creación de alojamientos.
 - Registro de pagos y actualización de saldos.
 - Persistencia y restauración del conjunto inicial.
+
+## Google Maps y configuración operativa
+
+Entra a **Administración → Configuración** para guardar la dirección, coordenadas, horarios, WhatsApp e instrucciones. El mapa utiliza el embed y las URL de indicaciones de Google Maps, por lo que esta versión no requiere una API key ni una variable de entorno adicional. Una integración futura con Places, autocompletado o mapas programables sí requerirá un proyecto de Google Cloud y su clave restringida.
 
 ## SEO, privacidad y analítica
 
