@@ -223,7 +223,7 @@ export class StayManagerApiService {
     return normalized;
   }
 
-  async registerPayment(reservationId: string, amount: number, method: PaymentMethod, reference: string, idempotencyKey = crypto.randomUUID()): Promise<Payment> {
+  async registerPayment(reservationId: string, amount: number, method: PaymentMethod, reference: string, idempotencyKey: string = crypto.randomUUID()): Promise<Payment> {
     if (this.isDemoMode) {
       const reservation = this.reservations().find((item) => item.id === reservationId);
       if (!reservation) throw new Error('Reserva no encontrada.');
