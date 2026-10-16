@@ -29,7 +29,7 @@ import { FloatingWhatsappComponent } from '../shared/components/floating-whatsap
       <button class="sidebar-overlay" type="button" aria-label="Cerrar menú" (click)="closePanels()"></button>
       <section class="admin-main">
         <header class="admin-topbar">
-          <button class="icon-button mobile-only" type="button" (click)="sidebarOpen.update(open => !open)" [attr.aria-expanded]="sidebarOpen()" aria-controls="admin-sidebar" [attr.aria-label]="sidebarOpen() ? 'Cerrar menú' : 'Abrir menú'"><i [class]="sidebarOpen() ? 'bi bi-x-lg' : 'bi bi-list'"></i></button>
+          <button class="icon-button mobile-only" type="button" (click)="toggleSidebar()" [attr.aria-expanded]="sidebarOpen()" aria-controls="admin-sidebar" [attr.aria-label]="sidebarOpen() ? 'Cerrar menú' : 'Abrir menú'"><i [class]="sidebarOpen() ? 'bi bi-x-lg' : 'bi bi-list'"></i></button>
           <div><strong>Centro de operaciones</strong><small>{{ currentDate }}</small></div>
           <div class="top-actions">
             <div class="notification-wrap">
@@ -58,7 +58,7 @@ export class AdminShellComponent {
     router.events.pipe(filter((event) => event instanceof NavigationEnd), takeUntilDestroyed(destroyRef))
       .subscribe(() => this.closePanels());
   }
-  closePanels(): void { this.sidebarOpen.set(false); this.notificationsOpen.set(false); }
+  toggleSidebar(): void { this.sidebarOpen.update((open) => !open); }\n  closePanels(): void { this.sidebarOpen.set(false); this.notificationsOpen.set(false); }
   toggleNotifications(event: Event): void { event.stopPropagation(); this.notificationsOpen.update((open) => !open); }
   @HostListener('document:keydown.escape') onEscape(): void { this.closePanels(); }
   @HostListener('document:click', ['$event']) onDocumentClick(event: Event): void {
