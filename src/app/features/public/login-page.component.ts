@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -52,7 +53,9 @@ export class LoginPageComponent {
       await this.alerts.toast('Bienvenido a StayManager');
       await this.router.navigateByUrl(this.route.snapshot.queryParamMap.get('returnUrl') ?? '/admin');
     } catch (error) {
-      const message = this.errors.message(error, 'Correo o contraseña incorrectos.');
+      const message = error instanceof HttpErrorResponse && error.status === 401
+        ? 'Correo o contraseña incorrectos.'
+        : this.errors.message(error, 'No fue posible iniciar sesión. Intenta nuevamente.');
       this.error.set(message);
       await this.alerts.error('No fue posible iniciar sesión', message);
     } finally {

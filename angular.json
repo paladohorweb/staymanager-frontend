@@ -52,6 +52,9 @@
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "proxyConfig": "proxy.conf.json"
+          },
           "configurations": {
             "production": { "buildTarget": "staymanager:build:production" },
             "development": { "buildTarget": "staymanager:build:development" },

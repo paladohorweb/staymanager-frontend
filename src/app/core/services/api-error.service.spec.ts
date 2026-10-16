@@ -23,6 +23,28 @@ describe('ApiErrorService', () => {
     expect(service.message(error)).toContain('No se pudo conectar con el backend');
   });
 
+  it('never exposes an HTML proxy error to the user', () => {
+    const error = new HttpErrorResponse({
+      status: 404,
+      error: '<!DOCTYPE html><html><body><pre>Cannot POST /api/v1/auth/login</pre></body></html>'
+    });
+
+    const message = service.message(error, 'No fue posible iniciar sesión.');
+
+    expect(message).toContain('respuesta inválida');
+    expect(message).not.toContain('<html>');
+    expect(message).not.toContain('Cannot POST');
+  });
+
+  it('parses ProblemDetail JSON received as text', () => {
+    const error = new HttpErrorResponse({
+      status: 401,
+      error: '{"detail":"Credenciales incorrectas.","code":"UNAUTHORIZED"}'
+    });
+
+    expect(service.message(error)).toBe('Credenciales incorrectas.');
+  });
+
   it('uses the supplied fallback for unknown failures', () => {
     expect(service.message(null, 'Error controlado')).toBe('Error controlado');
   });

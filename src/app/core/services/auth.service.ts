@@ -25,7 +25,7 @@ export class AuthService {
       this.currentUser.set(user);
       return user;
     }
-    const session = await firstValueFrom(this.http.post<AuthTokens>('/api/v1/auth/login', { email: email.trim(), password }));
+    const session = await firstValueFrom(this.http.post<AuthTokens>(`${environment.apiUrl}/auth/login`, { email: email.trim(), password }));
     this.storage.save(session);
     this.currentUser.set(session.user);
     return session.user;
@@ -35,7 +35,7 @@ export class AuthService {
     if (environment.demoMode) return;
     const refreshToken = this.storage.refreshToken;
     if (!refreshToken) throw new Error('La sesión no tiene token de renovación.');
-    const session = await firstValueFrom(this.http.post<AuthTokens>('/api/v1/auth/refresh', { refreshToken }));
+    const session = await firstValueFrom(this.http.post<AuthTokens>(`${environment.apiUrl}/auth/refresh`, { refreshToken }));
     this.storage.save(session);
     this.currentUser.set(session.user);
   }
@@ -43,7 +43,7 @@ export class AuthService {
   async loadProfile(): Promise<void> {
     if (environment.demoMode) return;
     if (!this.storage.accessToken) return;
-    const user = await firstValueFrom(this.http.get<SessionUser>('/api/v1/auth/me'));
+    const user = await firstValueFrom(this.http.get<SessionUser>(`${environment.apiUrl}/auth/me`));
     this.currentUser.set(user);
   }
 
