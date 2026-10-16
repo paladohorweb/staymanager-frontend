@@ -3,11 +3,12 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 import { AuthService } from '../core/services/auth.service';
 import { AlertService } from '../core/services/alert.service';
 import { StayManagerApiService } from '../core/services/staymanager-api.service';
+import { FloatingWhatsappComponent } from '../shared/components/floating-whatsapp.component';
 
 @Component({
   selector: 'app-admin-shell',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, FloatingWhatsappComponent],
   template: `
     <div class="admin-shell" [class.sidebar-open]="sidebarOpen()">
       <aside class="sidebar">
@@ -36,7 +37,7 @@ import { StayManagerApiService } from '../core/services/staymanager-api.service'
       <section class="admin-main">
         <header class="admin-topbar">
           <button class="icon-button mobile-only" type="button" (click)="sidebarOpen.set(true)">☰</button>
-          <div><strong>Centro de operaciones</strong><small>Domingo, 19 de julio</small></div>
+          <div><strong>Centro de operaciones</strong><small>{{ currentDate }}</small></div>
           <div class="top-actions">
             <button class="icon-button" type="button" aria-label="Notificaciones">♢<i></i></button>
             <div class="user-menu"><span class="avatar">VG</span><div><strong>{{ auth.currentUser()?.fullName }}</strong><small>Propietaria</small></div></div>
@@ -46,10 +47,14 @@ import { StayManagerApiService } from '../core/services/staymanager-api.service'
         <main class="admin-content"><router-outlet /></main>
       </section>
     </div>
+    <app-floating-whatsapp />
   `
 })
 export class AdminShellComponent {
   readonly sidebarOpen = signal(false);
+  readonly currentDate = new Intl.DateTimeFormat('es-CO', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+  }).format(new Date());
   constructor(
     readonly auth: AuthService,
     readonly store: StayManagerApiService,
@@ -65,3 +70,4 @@ export class AdminShellComponent {
     void this.router.navigate(['/login']);
   }
 }
+

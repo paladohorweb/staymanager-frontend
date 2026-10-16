@@ -131,8 +131,15 @@ export interface DashboardSummary {
   activeReservations: number;
   pendingReservations: number;
   approvedRevenue: number;
+  monthlyRevenue: number;
   pendingBalance: number;
   accommodations: number;
+  activeAccommodations: number;
+  occupiedAccommodations: number;
+  occupancyRate: number;
+  arrivalsToday: number;
+  departuresToday: number;
+  guestsInHouse: number;
 }
 
 export interface ApiProblem {
@@ -141,3 +148,4 @@ export interface ApiProblem {
   code?: string;
   errors?: Record<string, string>;
 }
+

@@ -302,13 +302,41 @@ export class StayManagerApiService {
   private updateDemoDashboard(): void {
     const activeStatuses: ReservationStatus[] = ['PENDING_PAYMENT', 'CONFIRMED', 'CHECKED_IN'];
     const validReservations = this.reservations().filter((item) => !['CANCELLED', 'EXPIRED'].includes(item.status));
+    const today = this.localDate(new Date());
+    const month = today.slice(0, 7);
+    const activeAccommodations = this.accommodations().filter((item) => item.status === 'ACTIVE').length;
+    const occupiedAccommodations = new Set(
+      this.reservations()
+        .filter((item) => activeStatuses.includes(item.status) && item.checkIn <= today && item.checkOut > today)
+        .map((item) => item.accommodationId)
+    ).size;
     this.dashboard.set({
       activeReservations: this.reservations().filter((item) => activeStatuses.includes(item.status)).length,
       pendingReservations: this.reservations().filter((item) => item.status === 'PENDING_PAYMENT').length,
       approvedRevenue: this.payments().filter((item) => item.status === 'APPROVED').reduce((sum, item) => sum + item.amount, 0),
+      monthlyRevenue: this.payments()
+        .filter((item) => item.status === 'APPROVED' && item.paidAt.slice(0, 7) === month)
+        .reduce((sum, item) => sum + item.amount, 0),
       pendingBalance: validReservations.reduce((sum, item) => sum + item.price.total - item.amountPaid, 0),
-      accommodations: this.accommodations().length
+      accommodations: this.accommodations().length,
+      activeAccommodations,
+      occupiedAccommodations,
+      occupancyRate: activeAccommodations ? Math.round(occupiedAccommodations * 1000 / activeAccommodations) / 10 : 0,
+      arrivalsToday: this.reservations().filter((item) =>
+        ['PENDING_PAYMENT', 'CONFIRMED'].includes(item.status) && item.checkIn === today).length,
+      departuresToday: this.reservations().filter((item) =>
+        ['CONFIRMED', 'CHECKED_IN'].includes(item.status) && item.checkOut === today).length,
+      guestsInHouse: this.reservations()
+        .filter((item) => item.status === 'CHECKED_IN')
+        .reduce((sum, item) => sum + item.adults + item.children, 0)
     });
+  }
+
+  private localDate(value: Date): string {
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, '0');
+    const day = String(value.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   private parseDate(value: string): Date {
@@ -329,3 +357,4 @@ export class StayManagerApiService {
     localStorage.setItem(key, JSON.stringify(value));
   }
 }
+

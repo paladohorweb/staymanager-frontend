@@ -2,11 +2,12 @@ import { Component, HostListener, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { StayManagerApiService } from '../core/services/staymanager-api.service';
 import { environment } from '../../environments/environment';
+import { FloatingWhatsappComponent } from '../shared/components/floating-whatsapp.component';
 
 @Component({
   selector: 'app-public-layout',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, FloatingWhatsappComponent],
   template: `
     <header class="public-header" [class.scrolled]="scrolled()">
       <div class="container nav-wrap">
@@ -37,6 +38,7 @@ import { environment } from '../../environments/environment';
       </div>
       <div class="container footer-bottom"><span>© 2026 StayManager</span><span>Producto demo de JGMSOLUTIONS</span></div>
     </footer>
+    <app-floating-whatsapp />
   `
 })
 export class PublicLayoutComponent {
@@ -52,3 +54,4 @@ export class PublicLayoutComponent {
     this.scrolled.set(window.scrollY > 20);
   }
 }
+
