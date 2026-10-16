@@ -20,6 +20,7 @@ import { FloatingWhatsappComponent } from '../shared/components/floating-whatsap
         <nav [class.open]="menuOpen()">
           <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" (click)="menuOpen.set(false)">Inicio</a>
           <a routerLink="/alojamientos" routerLinkActive="active" (click)="menuOpen.set(false)">Alojamientos</a>
+          <a routerLink="/mi-reserva" routerLinkActive="active" (click)="menuOpen.set(false)">Mi reserva</a>
           <a href="#experiencia" (click)="menuOpen.set(false)">Experiencia</a>
           <a routerLink="/login" class="btn btn-outline btn-small" (click)="menuOpen.set(false)">Panel administrativo</a>
         </nav>
@@ -32,7 +33,7 @@ import { FloatingWhatsappComponent } from '../shared/components/floating-whatsap
           <a routerLink="/" class="brand brand-light"><span class="brand-mark">S</span><span><strong>Stay</strong>Manager</span></a>
           <p>Tecnología para alojamientos memorables y operaciones rentables.</p>
         </div>
-        <div><h4>Explora</h4><a routerLink="/alojamientos">Alojamientos</a><a routerLink="/login">Acceso administrativo</a></div>
+        <div><h4>Explora</h4><a routerLink="/alojamientos">Alojamientos</a><a routerLink="/mi-reserva">Consultar mi reserva</a><a routerLink="/login">Acceso administrativo</a></div>
         <div><h4>Información</h4><a href="#">Términos</a><a href="#">Privacidad</a><a href="#">Cancelaciones</a></div>
         <div><h4>Contacto</h4><span>Guatapé, Colombia</span><span>+57 300 555 0101</span><span>reservas&#64;refugios.co</span></div>
       </div>

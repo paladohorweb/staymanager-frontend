@@ -8,7 +8,8 @@ export const routes: Routes = [
     path: '', component: PublicLayoutComponent, children: [
       { path: '', loadComponent: () => import('./features/public/home-page.component').then((m) => m.HomePageComponent) },
       { path: 'alojamientos', loadComponent: () => import('./features/public/explore-page.component').then((m) => m.ExplorePageComponent) },
-      { path: 'reservar/:id', loadComponent: () => import('./features/public/booking-page.component').then((m) => m.BookingPageComponent) }
+      { path: 'reservar/:id', loadComponent: () => import('./features/public/booking-page.component').then((m) => m.BookingPageComponent) },
+      { path: 'mi-reserva', loadComponent: () => import('./features/public/guest-portal-page.component').then((m) => m.GuestPortalPageComponent) }
     ]
   },
   { path: 'login', loadComponent: () => import('./features/public/login-page.component').then((m) => m.LoginPageComponent) },
@@ -22,3 +23,4 @@ export const routes: Routes = [
   },
   { path: '**', loadComponent: () => import('./features/public/not-found-page.component').then((m) => m.NotFoundPageComponent) }
 ];
+

@@ -119,7 +119,7 @@ export class BookingPageComponent {
       if (!this.termsAccepted) throw new Error('Debes aceptar las políticas para continuar.');
       const reservation = await this.store.createReservation(this.request);
       await this.alerts.success('Reserva solicitada', `Tu código es ${reservation.code}. Consérvalo para identificar tu solicitud.`);
-      await this.router.navigate(['/']);
+      await this.router.navigate(['/mi-reserva'], { queryParams: { code: reservation.code, email: reservation.guest.email } });
     } catch (error) {
       const message = this.errors.message(error, 'No fue posible crear la reserva.');
       this.error.set(message);
@@ -129,3 +129,4 @@ export class BookingPageComponent {
     }
   }
 }
+

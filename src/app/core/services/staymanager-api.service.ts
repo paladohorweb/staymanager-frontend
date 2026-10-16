@@ -6,6 +6,7 @@ import {
   AvailabilityResponse,
   BookingRequest,
   DashboardSummary,
+  GuestPortalReservation,
   Payment,
   PaymentMethod,
   PriceBreakdown,
@@ -165,6 +166,39 @@ export class StayManagerApiService {
     return normalized;
   }
 
+  async accessGuestReservation(code: string, email: string): Promise<GuestPortalReservation> {
+    if (this.isDemoMode) {
+      this.loadDemoState();
+      const reservation = this.reservations().find((item) =>
+        item.code.toLowerCase() === code.trim().toLowerCase()
+        && item.guest.email.toLowerCase() === email.trim().toLowerCase());
+      if (!reservation) throw new Error('No encontramos una reserva con esos datos.');
+      return this.toDemoGuestPortal(reservation);
+    }
+    const reservation = await firstValueFrom(this.http.post<GuestPortalReservation>(
+      `${this.api}/public/guest/reservations/access`, { code: code.trim(), email: email.trim() }
+    ));
+    return this.normalizeGuestPortal(reservation);
+  }
+
+  async cancelGuestReservation(code: string, email: string): Promise<GuestPortalReservation> {
+    if (this.isDemoMode) {
+      const current = this.reservations().find((item) =>
+        item.code.toLowerCase() === code.trim().toLowerCase()
+        && item.guest.email.toLowerCase() === email.trim().toLowerCase());
+      if (!current) throw new Error('No encontramos una reserva con esos datos.');
+      const updated: Reservation = { ...current, status: 'CANCELLED' };
+      this.reservations.update((items) => items.map((item) => item.id === current.id ? updated : item));
+      this.persistDemo(this.demoKeys.reservations, this.reservations());
+      this.updateDemoDashboard();
+      return this.toDemoGuestPortal(updated);
+    }
+    const reservation = await firstValueFrom(this.http.post<GuestPortalReservation>(
+      `${this.api}/public/guest/reservations/cancel`, { code: code.trim(), email: email.trim() }
+    ));
+    return this.normalizeGuestPortal(reservation);
+  }
+
   async updateReservationStatus(id: string, status: ReservationStatus): Promise<Reservation> {
     if (this.isDemoMode) {
       const current = this.reservations().find((item) => item.id === id);
@@ -258,6 +292,29 @@ export class StayManagerApiService {
       serviceFee: Number(item.price.serviceFee),
       total: Number(item.price.total)
     } };
+  }
+
+  private normalizeGuestPortal(item: GuestPortalReservation): GuestPortalReservation {
+    return { ...item, amountPaid: Number(item.amountPaid), balance: Number(item.balance), price: {
+      ...item.price,
+      accommodationSubtotal: Number(item.price.accommodationSubtotal),
+      cleaningFee: Number(item.price.cleaningFee),
+      serviceFee: Number(item.price.serviceFee),
+      total: Number(item.price.total)
+    } };
+  }
+
+  private toDemoGuestPortal(item: Reservation): GuestPortalReservation {
+    const cancellable = ['PENDING_PAYMENT', 'CONFIRMED'].includes(item.status) && item.checkIn > this.localDate(new Date());
+    return {
+      code: item.code, accommodationName: item.accommodationName,
+      propertyName: this.accommodationById(item.accommodationId)?.propertyName || 'Refugios del Bosque',
+      propertyLocation: this.accommodationById(item.accommodationId)?.propertyLocation || 'Colombia',
+      guestName: item.guest.fullName, guestEmail: item.guest.email, guestPhone: item.guest.phone,
+      checkIn: item.checkIn, checkOut: item.checkOut, adults: item.adults, children: item.children,
+      status: item.status, price: item.price, amountPaid: item.amountPaid, balance: item.balance,
+      cancellable, notes: item.notes
+    };
   }
 
   private loadDemoState(force = false): void {

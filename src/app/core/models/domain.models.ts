@@ -142,6 +142,26 @@ export interface DashboardSummary {
   guestsInHouse: number;
 }
 
+export interface GuestPortalReservation {
+  code: string;
+  accommodationName: string;
+  propertyName: string;
+  propertyLocation: string;
+  guestName: string;
+  guestEmail: string;
+  guestPhone: string;
+  checkIn: string;
+  checkOut: string;
+  adults: number;
+  children: number;
+  status: ReservationStatus;
+  price: PriceBreakdown;
+  amountPaid: number;
+  balance: number;
+  cancellable: boolean;
+  notes: string;
+}
+
 export interface ApiProblem {
   detail?: string;
   title?: string;
