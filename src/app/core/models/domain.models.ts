@@ -10,7 +10,7 @@ export type ReservationStatus =
   | 'EXPIRED'
   | 'NO_SHOW';
 export type PaymentStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'REFUNDED';
-export type PaymentMethod = 'NEQUI' | 'BANK_TRANSFER' | 'CASH' | 'CARD';
+export type PaymentMethod = 'NEQUI' | 'BANK_TRANSFER' | 'CASH' | 'CARD' | 'MANUAL';
 
 export interface Property {
   id: string;
@@ -85,7 +85,11 @@ export interface Payment {
   method: PaymentMethod;
   status: PaymentStatus;
   reference: string;
-  paidAt: string;
+  submittedAt?: string;
+  paidAt: string | null;
+  reviewedAt?: string | null;
+  reviewedBy?: string | null;
+  rejectionReason?: string | null;
 }
 
 export interface SessionUser {

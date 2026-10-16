@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { computed, Injectable, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -223,7 +223,7 @@ export class StayManagerApiService {
     return normalized;
   }
 
-  async registerPayment(reservationId: string, amount: number, method: PaymentMethod, reference: string): Promise<Payment> {
+  async registerPayment(reservationId: string, amount: number, method: PaymentMethod, reference: string, idempotencyKey = crypto.randomUUID()): Promise<Payment> {
     if (this.isDemoMode) {
       const reservation = this.reservations().find((item) => item.id === reservationId);
       if (!reservation) throw new Error('Reserva no encontrada.');
@@ -231,23 +231,68 @@ export class StayManagerApiService {
       if (amount <= 0 || amount > balance) throw new Error('El valor del pago no es válido.');
       const payment: Payment = {
         id: crypto.randomUUID(), reservationId, reservationCode: reservation.code, guestName: reservation.guest.fullName,
-        amount, method, status: 'APPROVED', reference, paidAt: new Date().toISOString()
+        amount, method, status: 'PENDING', reference: reference.trim(), submittedAt: new Date().toISOString(), paidAt: null
       };
       this.payments.update((items) => [payment, ...items]);
-      this.reservations.update((items) => items.map((item) => item.id === reservationId
-        ? { ...item, amountPaid: item.amountPaid + amount, balance: item.price.total - item.amountPaid - amount, status: 'CONFIRMED' }
-        : item));
       this.persistDemo(this.demoKeys.payments, this.payments());
-      this.persistDemo(this.demoKeys.reservations, this.reservations());
       this.updateDemoDashboard();
       return payment;
     }
     const payment = await firstValueFrom(this.http.post<Payment>(`${this.api}/admin/payments`, {
-      reservationId, amount, method, reference
-    }));
+      reservationId, amount, method, reference: reference.trim()
+    }, { headers: new HttpHeaders({ 'Idempotency-Key': idempotencyKey }) }));
     this.payments.update((items) => [payment, ...items]);
+    await this.refreshDashboard();
+    return payment;
+  }
+
+  async approvePayment(id: string): Promise<Payment> {
+    if (this.isDemoMode) {
+      const payment = this.payments().find((item) => item.id === id);
+      if (!payment) throw new Error('Pago no encontrado.');
+      if (payment.status === 'APPROVED') return payment;
+      if (payment.status !== 'PENDING') throw new Error('Solo se pueden aprobar pagos pendientes.');
+      const reservation = this.reservations().find((item) => item.id === payment.reservationId);
+      if (!reservation) throw new Error('Reserva no encontrada.');
+      const balance = reservation.price.total - reservation.amountPaid;
+      if (payment.amount > balance) throw new Error('El pago supera el saldo pendiente.');
+      const now = new Date().toISOString();
+      const updated: Payment = { ...payment, status: 'APPROVED', paidAt: now, reviewedAt: now };
+      this.payments.update((items) => items.map((item) => item.id === id ? updated : item));
+      this.reservations.update((items) => items.map((item) => item.id === reservation.id ? {
+        ...item, amountPaid: item.amountPaid + payment.amount,
+        balance: item.price.total - item.amountPaid - payment.amount,
+        status: item.status === 'PENDING_PAYMENT' ? 'CONFIRMED' : item.status
+      } : item));
+      this.persistDemo(this.demoKeys.payments, this.payments());
+      this.persistDemo(this.demoKeys.reservations, this.reservations());
+      this.updateDemoDashboard();
+      return updated;
+    }
+    const payment = await firstValueFrom(this.http.patch<Payment>(`${this.api}/admin/payments/${id}/approve`, {}));
+    this.payments.update((items) => items.map((item) => item.id === id ? payment : item));
     const reservations = await firstValueFrom(this.http.get<Reservation[]>(`${this.api}/admin/reservations`));
     this.reservations.set(reservations.map((item) => this.normalizeReservation(item)));
+    await this.refreshDashboard();
+    return payment;
+  }
+
+  async rejectPayment(id: string, reason: string): Promise<Payment> {
+    if (this.isDemoMode) {
+      const payment = this.payments().find((item) => item.id === id);
+      if (!payment) throw new Error('Pago no encontrado.');
+      if (payment.status === 'REJECTED') return payment;
+      if (payment.status !== 'PENDING') throw new Error('Solo se pueden rechazar pagos pendientes.');
+      const updated: Payment = {
+        ...payment, status: 'REJECTED', reviewedAt: new Date().toISOString(), rejectionReason: reason.trim()
+      };
+      this.payments.update((items) => items.map((item) => item.id === id ? updated : item));
+      this.persistDemo(this.demoKeys.payments, this.payments());
+      this.updateDemoDashboard();
+      return updated;
+    }
+    const payment = await firstValueFrom(this.http.patch<Payment>(`${this.api}/admin/payments/${id}/reject`, { reason: reason.trim() }));
+    this.payments.update((items) => items.map((item) => item.id === id ? payment : item));
     await this.refreshDashboard();
     return payment;
   }
@@ -395,7 +440,7 @@ export class StayManagerApiService {
       pendingReservations: this.reservations().filter((item) => item.status === 'PENDING_PAYMENT').length,
       approvedRevenue: this.payments().filter((item) => item.status === 'APPROVED').reduce((sum, item) => sum + item.amount, 0),
       monthlyRevenue: this.payments()
-        .filter((item) => item.status === 'APPROVED' && item.paidAt.slice(0, 7) === month)
+        .filter((item) => item.status === 'APPROVED' && item.paidAt?.slice(0, 7) === month)
         .reduce((sum, item) => sum + item.amount, 0),
       pendingBalance: validReservations.reduce((sum, item) => sum + item.price.total - item.amountPaid, 0),
       accommodations: this.accommodations().length,
