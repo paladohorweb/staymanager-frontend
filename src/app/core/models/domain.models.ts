@@ -39,6 +39,11 @@ export interface Accommodation {
   status: AccommodationStatus;
   amenities: string[];
   imageUrl: string;
+  mapAddress: string;
+  mapLatitude: number | null;
+  mapLongitude: number | null;
+  googleMapsUrl: string;
+  arrivalInstructions: string;
 }
 
 export interface Guest {
@@ -164,6 +169,7 @@ export interface GuestPaymentReport {
 }
 
 export interface GuestPortalReservation {
+  accommodationId: string;
   code: string;
   accommodationName: string;
   propertyName: string;

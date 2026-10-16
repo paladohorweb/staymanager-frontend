@@ -40,21 +40,30 @@ export const DEMO_ACCOMMODATIONS: Accommodation[] = [
     name: 'Cabaña Nido', type: 'CABIN', description: 'Cabaña íntima con jacuzzi, chimenea y terraza privada frente al bosque.',
     capacity: 2, bedrooms: 1, bathrooms: 1, baseNightPrice: 360000, weekendNightPrice: 430000, cleaningFee: 65000,
     status: 'ACTIVE', amenities: ['Jacuzzi', 'Chimenea', 'Desayuno', 'Wi-Fi', 'Parqueadero'],
-    imageUrl: 'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&fm=webp&w=960&q=68'
+    imageUrl: 'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&fm=webp&w=960&q=68',
+    mapAddress: 'Vereda El Roble, Guatapé, Antioquia', mapLatitude: 6.232584, mapLongitude: -75.158989,
+    googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=6.232584,-75.158989',
+    arrivalInstructions: 'Después del puente toma la vía a la vereda El Roble. La entrada de Cabaña Nido está señalizada; confirma tu llegada por WhatsApp 30 minutos antes.'
   },
   {
     id: 'acc-familiar', propertyId: 'prop-bosque', propertyName: 'Reserva Refugios del Bosque', propertyLocation: 'Guatapé, Antioquia',
     name: 'Cabaña Roble', type: 'COUNTRY_HOUSE', description: 'Espacio familiar amplio con cocina, fogata y sendero privado.',
     capacity: 6, bedrooms: 3, bathrooms: 2, baseNightPrice: 620000, weekendNightPrice: 740000, cleaningFee: 95000,
     status: 'ACTIVE', amenities: ['Cocina', 'Fogata', 'BBQ', 'Wi-Fi', 'Pet friendly'],
-    imageUrl: 'https://images.unsplash.com/photo-1473445361085-b9a07f55608b?auto=format&fit=crop&fm=webp&w=960&q=68'
+    imageUrl: 'https://images.unsplash.com/photo-1473445361085-b9a07f55608b?auto=format&fit=crop&fm=webp&w=960&q=68',
+    mapAddress: 'Sector La Piedra, Guatapé, Antioquia', mapLatitude: 6.22191, mapLongitude: -75.17124,
+    googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=6.22191,-75.17124',
+    arrivalInstructions: 'Ingresa por el sector La Piedra y continúa hasta el portón verde. Informa por WhatsApp cuando estés a 15 minutos para habilitar el acceso.'
   },
   {
     id: 'acc-glamping', propertyId: 'prop-cafe', propertyName: 'Mirador del Café', propertyLocation: 'Salento, Quindío',
     name: 'Domo Aurora', type: 'GLAMPING', description: 'Domo panorámico para ver las estrellas, con baño privado y desayuno local.',
     capacity: 3, bedrooms: 1, bathrooms: 1, baseNightPrice: 410000, weekendNightPrice: 485000, cleaningFee: 70000,
     status: 'ACTIVE', amenities: ['Vista panorámica', 'Desayuno', 'Minibar', 'Wi-Fi', 'Hamaca'],
-    imageUrl: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&fm=webp&w=960&q=68'
+    imageUrl: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&fm=webp&w=960&q=68',
+    mapAddress: 'Vía Salento - Boquía, Quindío', mapLatitude: 4.63747, mapLongitude: -75.57042,
+    googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=4.63747,-75.57042',
+    arrivalInstructions: 'Desde Salento toma la vía hacia Boquía. El acceso al Domo Aurora está a la derecha después del mirador; evita rutas alternas sin pavimentar.'
   }
 ];
 

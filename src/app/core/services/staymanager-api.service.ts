@@ -415,6 +415,26 @@ export class StayManagerApiService {
     return normalized;
   }
 
+  async updateAccommodation(id: string, accommodation: AccommodationPayload): Promise<Accommodation> {
+    if (this.isDemoMode) {
+      const property = this.propertyById(accommodation.propertyId);
+      if (!property) throw new Error('Selecciona una propiedad válida.');
+      const updated: Accommodation = {
+        ...accommodation, id, propertyName: property.name, propertyLocation: property.location
+      };
+      this.accommodations.update((items) => items.map((item) => item.id === id ? updated : item));
+      this.persistDemo(this.demoKeys.accommodations, this.accommodations());
+      this.updateDemoDashboard();
+      return updated;
+    }
+    const updated = await firstValueFrom(
+      this.http.put<Accommodation>(`${this.api}/admin/accommodations/${id}`, accommodation)
+    );
+    const normalized = this.normalizeAccommodation(updated);
+    this.accommodations.update((items) => items.map((item) => item.id === id ? normalized : item));
+    return normalized;
+  }
+
   async markNotificationRead(id: string): Promise<void> {
     const current = this.notifications().find((item) => item.id === id);
     if (!current || current.readAt) return;
@@ -442,7 +462,16 @@ export class StayManagerApiService {
   }
 
   private normalizeAccommodation(item: Accommodation): Accommodation {
-    return { ...item, amenities: [...(item.amenities ?? [])], imageUrl: item.imageUrl ?? '' };
+    return {
+      ...item,
+      amenities: [...(item.amenities ?? [])],
+      imageUrl: item.imageUrl ?? '',
+      mapAddress: item.mapAddress ?? item.propertyLocation ?? '',
+      mapLatitude: item.mapLatitude === null || item.mapLatitude === undefined ? null : Number(item.mapLatitude),
+      mapLongitude: item.mapLongitude === null || item.mapLongitude === undefined ? null : Number(item.mapLongitude),
+      googleMapsUrl: item.googleMapsUrl ?? '',
+      arrivalInstructions: item.arrivalInstructions ?? ''
+    };
   }
 
   private normalizeReservation(item: Reservation): Reservation {
@@ -471,7 +500,9 @@ export class StayManagerApiService {
 
   private normalizeGuestPortal(item: GuestPortalReservation): GuestPortalReservation {
     return {
-      ...item, amountPaid: Number(item.amountPaid), balance: Number(item.balance),
+      ...item,
+      accommodationId: item.accommodationId || this.accommodations().find((candidate) => candidate.name === item.accommodationName)?.id || '',
+      amountPaid: Number(item.amountPaid), balance: Number(item.balance),
       pendingPaymentAmount: Number(item.pendingPaymentAmount ?? 0),
       pendingPaymentCount: Number(item.pendingPaymentCount ?? 0),
       paymentInstructions: {
@@ -495,6 +526,7 @@ export class StayManagerApiService {
     const pendingPayments = this.payments().filter((payment) =>
       payment.reservationId === item.id && payment.status === 'PENDING');
     return {
+      accommodationId: item.accommodationId,
       code: item.code, accommodationName: item.accommodationName,
       propertyName: this.accommodationById(item.accommodationId)?.propertyName || 'Refugios del Bosque',
       propertyLocation: this.accommodationById(item.accommodationId)?.propertyLocation || 'Colombia',
