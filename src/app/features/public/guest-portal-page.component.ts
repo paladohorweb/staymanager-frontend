@@ -1,7 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { GuestPortalReservation, ReservationStatus } from '../../core/models/domain.models';
+import { GuestPortalReservation, PaymentMethod, ReservationStatus } from '../../core/models/domain.models';
 import { AlertService } from '../../core/services/alert.service';
 import { ApiErrorService } from '../../core/services/api-error.service';
 import { StayManagerApiService } from '../../core/services/staymanager-api.service';
@@ -9,105 +9,48 @@ import { currency, shortDate } from '../../shared/utils/format.utils';
 import { environment } from '../../../environments/environment';
 
 @Component({
-  selector: 'app-guest-portal-page',
-  standalone: true,
-  imports: [FormsModule, RouterLink],
+  selector: 'app-guest-portal-page', standalone: true, imports: [FormsModule, RouterLink],
   styles: [`
-    .portal-hero{padding:7rem 0 3rem;background:linear-gradient(135deg,#eef5ff,#fff)}
-    .portal-shell{max-width:980px;margin:auto}.access-card{max-width:620px;margin:0 auto}
-    .portal-grid{display:grid;grid-template-columns:1.35fr .65fr;gap:1.25rem;align-items:start}
-    .stay-card,.payment-card{padding:1.5rem}.portal-heading{display:flex;justify-content:space-between;gap:1rem;align-items:start}
-    .status-pill{border-radius:999px;padding:.45rem .8rem;background:#e8f0ff;color:#1d4ed8;font-weight:700;font-size:.78rem}
-    .facts{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin:1.5rem 0}.fact{padding:1rem;background:#f8fafc;border-radius:12px}
-    .fact small{display:block;color:#64748b}.fact strong{display:block;margin-top:.2rem}.payment-line{display:flex;justify-content:space-between;margin:.7rem 0}
-    .balance{padding-top:1rem;border-top:1px solid #e2e8f0;font-size:1.08rem}.portal-actions{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1.25rem}
-    @media(max-width:760px){.portal-grid{grid-template-columns:1fr}.facts{grid-template-columns:1fr}.portal-heading{display:block}.status-pill{display:inline-block;margin-top:.5rem}}
+    .portal-hero{padding:7rem 0 3rem;background:linear-gradient(135deg,#eef5ff,#fff)}.portal-shell{max-width:1040px;margin:auto}.access-card{max-width:620px;margin:0 auto}
+    .portal-grid{display:grid;grid-template-columns:1.35fr .65fr;gap:1.25rem;align-items:start}.stay-card,.payment-card{padding:1.5rem}.portal-heading{display:flex;justify-content:space-between;gap:1rem;align-items:start}
+    .status-pill{border-radius:999px;padding:.45rem .8rem;background:#e8f0ff;color:#1d4ed8;font-weight:700;font-size:.78rem}.facts{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin:1.5rem 0}.fact{padding:1rem;background:#f8fafc;border-radius:12px}.fact small{display:block;color:#64748b}.fact strong{display:block;margin-top:.2rem}
+    .payment-line{display:flex;justify-content:space-between;gap:1rem;margin:.7rem 0}.payment-line.pending{color:#98670b}.balance{padding-top:1rem;border-top:1px solid #e2e8f0;font-size:1.08rem}.portal-actions{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1.25rem}
+    .payment-instructions{margin-top:1.25rem;padding-top:1.1rem;border-top:1px solid #e2e8f0}.payment-instructions h4{font-size:.8rem;margin-bottom:.8rem}.pay-option{padding:.8rem;border-radius:10px;background:#f5f8f7;margin:.6rem 0}.pay-option strong,.pay-option small{display:block}.pay-option small{color:#64748b;margin-top:.25rem;line-height:1.5}.copy-button{border:0;background:transparent;color:var(--primary);font-size:.65rem;font-weight:800;padding:.35rem 0;cursor:pointer}
+    .pending-notice{display:flex;gap:.7rem;align-items:flex-start;padding:.8rem;margin:.9rem 0;background:#fff8e8;color:#885d09;border-radius:10px;font-size:.68rem}.payment-modal>p{margin:-.25rem 0 1.25rem}.secure-note{display:flex;gap:.7rem;align-items:center;margin:1rem 0;padding:.8rem;background:#eef7f4;border-radius:10px;color:var(--primary);font-size:.67rem}.method-choice{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin:.5rem 0 1rem}.method-choice button{border:1px solid #dbe4df;background:#fff;border-radius:10px;padding:.8rem;font-weight:700}.method-choice button.active{border-color:var(--primary);background:var(--primary-soft);color:var(--primary)}
+    @media(max-width:760px){.portal-grid{grid-template-columns:1fr}.facts{grid-template-columns:1fr 1fr}.portal-heading{display:block}.status-pill{display:inline-block;margin-top:.5rem}.portal-actions .btn{flex:1 1 100%}}
+    @media(max-width:460px){.facts{grid-template-columns:1fr}.stay-card,.payment-card{padding:1.1rem}.method-choice{grid-template-columns:1fr}.portal-hero h1{font-size:2rem}}
   `],
   template: `
-    <section class="portal-hero">
-      <div class="container portal-shell">
-        <span class="eyebrow">PORTAL DEL HUÉSPED</span>
-        <h1>Tu estadía, siempre a la mano</h1>
-        <p>Consulta fechas, pagos y estado de tu reserva con el código enviado al confirmar.</p>
-      </div>
-    </section>
-    <section class="section">
-      <div class="container portal-shell">
-        @if (!reservation()) {
-          <form class="card-panel access-card" #accessForm="ngForm" (ngSubmit)="access()">
-            <h2>Consultar mi reserva</h2><p>Usa el mismo correo registrado durante la reserva.</p>
-            <div class="form-grid two">
-              <label>Código de reserva<input name="code" [(ngModel)]="code" required maxlength="20" placeholder="ST-2601234"></label>
-              <label>Correo electrónico<input type="email" name="email" [(ngModel)]="email" required email placeholder="correo@ejemplo.com"></label>
-            </div>
-            @if (error()) { <div class="alert alert-danger py-2" role="alert">{{ error() }}</div> }
-            <button class="btn btn-primary btn-block" type="submit" [disabled]="accessForm.invalid || loading()">
-              @if (loading()) { <span class="spinner-border spinner-border-sm me-2"></span> } Ver mi estadía
-            </button>
-          </form>
-        } @else {
-          @if (reservation(); as item) {
-          <div class="portal-heading mb-4"><div><button class="text-button p-0 mb-2" type="button" (click)="reset()">← Consultar otra</button><h2>Hola, {{ firstName(item.guestName) }}</h2><p>{{ item.propertyName }} · {{ item.propertyLocation }}</p></div><span class="status-pill">{{ statusLabel(item.status) }}</span></div>
-          <div class="portal-grid">
-            <article class="card-panel stay-card">
-              <span class="eyebrow">RESERVA {{ item.code }}</span><h3>{{ item.accommodationName }}</h3>
-              <div class="facts">
-                <div class="fact"><small>Entrada</small><strong>{{ date(item.checkIn) }}</strong></div>
-                <div class="fact"><small>Salida</small><strong>{{ date(item.checkOut) }}</strong></div>
-                <div class="fact"><small>Huéspedes</small><strong>{{ item.adults }} adultos · {{ item.children }} niños</strong></div>
-                <div class="fact"><small>Noches</small><strong>{{ item.price.nights }}</strong></div>
-              </div>
-              @if (item.notes) { <div class="alert alert-light"><strong>Solicitud:</strong> {{ item.notes }}</div> }
-              <div class="portal-actions"><a class="btn btn-primary" [href]="whatsapp(item)" target="_blank" rel="noopener">Hablar por WhatsApp</a>@if (item.cancellable) { <button class="btn btn-outline" type="button" (click)="cancel()" [disabled]="loading()">Cancelar reserva</button> }</div>
-            </article>
-            <aside class="card-panel payment-card"><span class="eyebrow">PAGOS</span><div class="payment-line"><span>Total</span><strong>{{ money(item.price.total) }}</strong></div><div class="payment-line"><span>Pagado</span><strong>{{ money(item.amountPaid) }}</strong></div><div class="payment-line balance"><span>Saldo pendiente</span><strong>{{ money(item.balance) }}</strong></div><small>Los pagos son validados por el alojamiento. Conserva siempre tu referencia.</small></aside>
-          </div>
-          }
-        }
-      </div>
-    </section>
+    <section class="portal-hero"><div class="container portal-shell"><span class="eyebrow">PORTAL DEL HUÉSPED</span><h1>Tu estadía, siempre a la mano</h1><p>Consulta fechas, pagos y estado de tu reserva con el código enviado al confirmar.</p></div></section>
+    <section class="section"><div class="container portal-shell">
+      @if (!reservation()) {
+        <form class="card-panel access-card" #accessForm="ngForm" (ngSubmit)="access()"><h2>Consultar mi reserva</h2><p>Usa el mismo correo registrado durante la reserva.</p><div class="form-grid two"><label>Código de reserva<input name="code" [(ngModel)]="code" required maxlength="20" placeholder="ST-2601234"></label><label>Correo electrónico<input type="email" name="email" [(ngModel)]="email" required email placeholder="correo@ejemplo.com"></label></div>@if(error()){<div class="alert alert-danger py-2" role="alert">{{error()}}</div>}<button class="btn btn-primary btn-block" type="submit" [disabled]="accessForm.invalid||loading()">@if(loading()){<span class="spinner-border spinner-border-sm me-2"></span>} Ver mi estadía</button></form>
+      } @else if (reservation(); as item) {
+        <div class="portal-heading mb-4"><div><button class="text-button p-0 mb-2" type="button" (click)="reset()">← Consultar otra</button><h2>Hola, {{firstName(item.guestName)}}</h2><p>{{item.propertyName}} · {{item.propertyLocation}}</p></div><span class="status-pill">{{statusLabel(item.status)}}</span></div>
+        <div class="portal-grid">
+          <article class="card-panel stay-card"><span class="eyebrow">RESERVA {{item.code}}</span><h3>{{item.accommodationName}}</h3><div class="facts"><div class="fact"><small>Entrada</small><strong>{{date(item.checkIn)}}</strong></div><div class="fact"><small>Salida</small><strong>{{date(item.checkOut)}}</strong></div><div class="fact"><small>Huéspedes</small><strong>{{item.adults}} adultos · {{item.children}} niños</strong></div><div class="fact"><small>Noches</small><strong>{{item.price.nights}}</strong></div></div>@if(item.notes){<div class="alert alert-light"><strong>Solicitud:</strong> {{item.notes}}</div>}<div class="portal-actions"><a class="btn btn-primary" [href]="whatsapp(item)" target="_blank" rel="noopener">Hablar por WhatsApp</a>@if(item.cancellable){<button class="btn btn-outline" type="button" (click)="cancel()" [disabled]="loading()">Cancelar reserva</button>}</div></article>
+          <aside class="card-panel payment-card"><span class="eyebrow">PAGOS</span><div class="payment-line"><span>Total</span><strong>{{money(item.price.total)}}</strong></div><div class="payment-line"><span>Pagado y aprobado</span><strong>{{money(item.amountPaid)}}</strong></div>@if(item.pendingPaymentCount){<div class="payment-line pending"><span>En verificación</span><strong>{{money(item.pendingPaymentAmount)}}</strong></div><div class="pending-notice"><i class="bi bi-hourglass-split"></i><span>{{item.pendingPaymentCount}} pago(s) esperando revisión. El saldo cambiará después de la aprobación.</span></div>}<div class="payment-line balance"><span>Saldo pendiente</span><strong>{{money(item.balance)}}</strong></div>
+            @if(item.balance>0 && item.paymentInstructions.enabled){<div class="payment-instructions"><h4>Medios disponibles</h4>@if(item.paymentInstructions.acceptedMethods.includes('NEQUI')){<div class="pay-option"><strong><i class="bi bi-phone me-1"></i> Nequi</strong><small>{{item.paymentInstructions.nequiNumber}} · {{item.paymentInstructions.accountHolder}}</small><button class="copy-button" type="button" (click)="copy(item.paymentInstructions.nequiNumber)">Copiar número</button></div>}@if(item.paymentInstructions.acceptedMethods.includes('BANK_TRANSFER')){<div class="pay-option"><strong><i class="bi bi-bank me-1"></i> Transferencia bancaria</strong><small>{{item.paymentInstructions.bankInstructions}}</small></div>}<button class="btn btn-primary btn-block mt-3" type="button" (click)="openPayment(item)">Reportar un pago</button></div>} @else if(item.balance>0){<small>El alojamiento aún no ha configurado pagos desde el portal. Puedes contactarlo por WhatsApp.</small>}
+          </aside>
+        </div>
+      }
+    </div></section>
+    @if(paymentOpen() && reservation(); as item){<div class="modal-backdrop"><form class="simple-modal payment-modal" #paymentForm="ngForm" (ngSubmit)="reportPayment()"><button class="modal-close" type="button" (click)="closePayment()">×</button><span class="eyebrow">REPORTAR COMPROBANTE</span><h2>Informar un pago</h2><p>El alojamiento revisará la referencia antes de actualizar tu saldo.</p><div class="method-choice">@if(item.paymentInstructions.acceptedMethods.includes('NEQUI')){<button type="button" [class.active]="paymentMethod==='NEQUI'" (click)="paymentMethod='NEQUI'"><i class="bi bi-phone me-1"></i>Nequi</button>}@if(item.paymentInstructions.acceptedMethods.includes('BANK_TRANSFER')){<button type="button" [class.active]="paymentMethod==='BANK_TRANSFER'" (click)="paymentMethod='BANK_TRANSFER'"><i class="bi bi-bank me-1"></i>Transferencia</button>}</div><label>Valor reportado<input type="number" name="paymentAmount" [(ngModel)]="paymentAmount" min="1" [max]="item.balance" required></label><label>Referencia del comprobante<input name="paymentReference" [(ngModel)]="paymentReference" maxlength="100" required placeholder="Ej. número de aprobación o comprobante"></label><div class="secure-note"><i class="bi bi-shield-check"></i><span>La operación está protegida contra envíos duplicados.</span></div>@if(paymentError()){<div class="alert alert-danger py-2">{{paymentError()}}</div>}<button class="btn btn-primary btn-block" [disabled]="paymentForm.invalid||reporting()">@if(reporting()){<span class="spinner-border spinner-border-sm me-2"></span>}Enviar para verificación</button></form></div>}
   `
 })
 export class GuestPortalPageComponent {
-  code = '';
-  email = '';
-  readonly reservation = signal<GuestPortalReservation | null>(null);
-  readonly loading = signal(false);
-  readonly error = signal('');
-  readonly money = currency;
-  readonly date = shortDate;
-
-  constructor(
-    route: ActivatedRoute,
-    private readonly store: StayManagerApiService,
-    private readonly errors: ApiErrorService,
-    private readonly alerts: AlertService
-  ) {
-    this.code = route.snapshot.queryParamMap.get('code') ?? '';
-    this.email = route.snapshot.queryParamMap.get('email') ?? '';
-    if (this.code && this.email) void this.access();
-  }
-
-  async access(): Promise<void> {
-    this.loading.set(true); this.error.set('');
-    try { this.reservation.set(await this.store.accessGuestReservation(this.code, this.email)); }
-    catch (error) { this.error.set(this.errors.message(error, 'No fue posible consultar la reserva.')); }
-    finally { this.loading.set(false); }
-  }
-
-  async cancel(): Promise<void> {
-    const confirmed = await this.alerts.confirm('¿Cancelar la reserva?', 'Esta acción liberará las fechas seleccionadas.');
-    if (!confirmed) return;
-    this.loading.set(true);
-    try {
-      this.reservation.set(await this.store.cancelGuestReservation(this.code, this.email));
-      await this.alerts.success('Reserva cancelada', 'El alojamiento recibió la actualización.');
-    } catch (error) { await this.alerts.error('No se pudo cancelar', this.errors.message(error)); }
-    finally { this.loading.set(false); }
-  }
-
-  reset(): void { this.reservation.set(null); this.error.set(''); }
-  firstName(name: string): string { return name.trim().split(/\s+/)[0]; }
-  statusLabel(status: ReservationStatus): string { return ({ PENDING_PAYMENT:'Pendiente de pago', CONFIRMED:'Confirmada', CHECKED_IN:'En estadía', CHECKED_OUT:'Finalizada', CANCELLED:'Cancelada', EXPIRED:'Expirada', NO_SHOW:'No se presentó', QUOTED:'Cotización' } as Record<ReservationStatus,string>)[status]; }
-  whatsapp(item: GuestPortalReservation): string { return `https://wa.me/${environment.whatsappNumber}?text=${encodeURIComponent(`Hola, necesito ayuda con mi reserva ${item.code}.`)}`; }
+  code=''; email=''; paymentAmount=0; paymentMethod: PaymentMethod='NEQUI'; paymentReference='';
+  readonly reservation=signal<GuestPortalReservation|null>(null); readonly loading=signal(false); readonly error=signal('');
+  readonly paymentOpen=signal(false); readonly reporting=signal(false); readonly paymentError=signal('');
+  readonly money=currency; readonly date=shortDate; private paymentAttempt:{fingerprint:string;key:string}|null=null;
+  constructor(route:ActivatedRoute,private readonly store:StayManagerApiService,private readonly errors:ApiErrorService,private readonly alerts:AlertService){this.code=route.snapshot.queryParamMap.get('code')??'';this.email=route.snapshot.queryParamMap.get('email')??'';if(this.code&&this.email)void this.access();}
+  async access():Promise<void>{this.loading.set(true);this.error.set('');try{this.reservation.set(await this.store.accessGuestReservation(this.code,this.email));}catch(error){this.error.set(this.errors.message(error,'No fue posible consultar la reserva.'));}finally{this.loading.set(false);}}
+  async cancel():Promise<void>{if(!await this.alerts.confirm('¿Cancelar la reserva?','Esta acción liberará las fechas seleccionadas.'))return;this.loading.set(true);try{this.reservation.set(await this.store.cancelGuestReservation(this.code,this.email));await this.alerts.success('Reserva cancelada','El alojamiento recibió la actualización.');}catch(error){await this.alerts.error('No se pudo cancelar',this.errors.message(error));}finally{this.loading.set(false);}}
+  openPayment(item:GuestPortalReservation):void{this.paymentAmount=item.balance;this.paymentReference='';this.paymentError.set('');this.paymentAttempt=null;this.paymentMethod=item.paymentInstructions.acceptedMethods[0]??'NEQUI';this.paymentOpen.set(true);}
+  closePayment():void{this.paymentOpen.set(false);this.paymentError.set('');}
+  async reportPayment():Promise<void>{const item=this.reservation();if(!item)return;const fingerprint=JSON.stringify([item.code,this.email.toLowerCase(),Number(this.paymentAmount),this.paymentMethod,this.paymentReference.trim()]);if(!this.paymentAttempt||this.paymentAttempt.fingerprint!==fingerprint)this.paymentAttempt={fingerprint,key:crypto.randomUUID()};this.reporting.set(true);this.paymentError.set('');try{await this.store.reportGuestPayment(item.code,this.email,this.paymentAmount,this.paymentMethod,this.paymentReference,this.paymentAttempt.key);this.closePayment();this.reservation.set(await this.store.accessGuestReservation(this.code,this.email));await this.alerts.success('Pago enviado para verificación','El alojamiento recibió la referencia y revisará el movimiento.');this.paymentAttempt=null;}catch(error){this.paymentError.set(this.errors.message(error,'No fue posible reportar el pago.'));}finally{this.reporting.set(false);}}
+  async copy(value:string):Promise<void>{try{await navigator.clipboard.writeText(value);await this.alerts.toast('Número copiado');}catch{await this.alerts.info('Número Nequi',value);}}
+  reset():void{this.reservation.set(null);this.error.set('');this.closePayment();} firstName(name:string):string{return name.trim().split(/\s+/)[0];}
+  statusLabel(status:ReservationStatus):string{return({PENDING_PAYMENT:'Pendiente de pago',CONFIRMED:'Confirmada',CHECKED_IN:'En estadía',CHECKED_OUT:'Finalizada',CANCELLED:'Cancelada',EXPIRED:'Expirada',NO_SHOW:'No se presentó',QUOTED:'Cotización'}as Record<ReservationStatus,string>)[status];}
+  whatsapp(item:GuestPortalReservation):string{return`https://wa.me/${environment.whatsappNumber}?text=${encodeURIComponent(`Hola, necesito ayuda con mi reserva ${item.code}.`)}`;}
 }

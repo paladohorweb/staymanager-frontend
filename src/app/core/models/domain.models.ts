@@ -146,6 +146,23 @@ export interface DashboardSummary {
   guestsInHouse: number;
 }
 
+export interface PaymentInstructions {
+  enabled: boolean;
+  nequiNumber: string;
+  accountHolder: string;
+  bankInstructions: string;
+  acceptedMethods: PaymentMethod[];
+}
+
+export interface GuestPaymentReport {
+  id: string;
+  amount: number;
+  method: PaymentMethod;
+  status: PaymentStatus;
+  reference: string;
+  submittedAt: string;
+}
+
 export interface GuestPortalReservation {
   code: string;
   accommodationName: string;
@@ -164,6 +181,9 @@ export interface GuestPortalReservation {
   balance: number;
   cancellable: boolean;
   notes: string;
+  pendingPaymentAmount: number;
+  pendingPaymentCount: number;
+  paymentInstructions: PaymentInstructions;
 }
 
 export type NotificationType = 'RESERVATION' | 'PAYMENT' | 'STAY' | 'SYSTEM';

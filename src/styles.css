@@ -237,7 +237,7 @@ textarea { resize: vertical; }
 .admin-heading h1 { font: 400 2.2rem Georgia, serif; margin-bottom: 5px; }
 .admin-heading p { margin: 0; font-size: .85rem; }
 .mobile-only { display: none; }
-.sidebar-overlay { display: none; }
+.sidebar-overlay { display: none; border: 0; padding: 0; cursor: pointer; }
 
 /* Admin dashboard */
 .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 22px; }

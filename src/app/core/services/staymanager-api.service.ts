@@ -7,6 +7,7 @@ import {
   AvailabilityResponse,
   BookingRequest,
   DashboardSummary,
+  GuestPaymentReport,
   GuestPortalReservation,
   Payment,
   PaymentMethod,
@@ -204,6 +205,34 @@ export class StayManagerApiService {
     return this.normalizeGuestPortal(reservation);
   }
 
+  async reportGuestPayment(
+    code: string, email: string, amount: number, method: PaymentMethod,
+    reference: string, idempotencyKey: string = crypto.randomUUID()
+  ): Promise<GuestPaymentReport> {
+    if (this.isDemoMode) {
+      const reservation = this.reservations().find((item) =>
+        item.code.toLowerCase() === code.trim().toLowerCase()
+        && item.guest.email.toLowerCase() === email.trim().toLowerCase());
+      if (!reservation) throw new Error('No encontramos una reserva con esos datos.');
+      if (!['NEQUI', 'BANK_TRANSFER'].includes(method)) throw new Error('Método de pago no permitido desde el portal.');
+      const balance = reservation.price.total - reservation.amountPaid;
+      if (amount <= 0 || amount > balance) throw new Error('El valor reportado no es válido.');
+      const submittedAt = new Date().toISOString();
+      const payment: Payment = {
+        id: crypto.randomUUID(), reservationId: reservation.id, reservationCode: reservation.code,
+        guestName: reservation.guest.fullName, amount, method, status: 'PENDING',
+        reference: reference.trim(), submittedAt, paidAt: null
+      };
+      this.payments.update((items) => [payment, ...items]);
+      this.persistDemo(this.demoKeys.payments, this.payments());
+      this.updateDemoDashboard();
+      return { id: payment.id, amount, method, status: 'PENDING', reference: payment.reference, submittedAt };
+    }
+    return firstValueFrom(this.http.post<GuestPaymentReport>(`${this.api}/public/guest/payments`, {
+      code: code.trim(), email: email.trim(), amount, method, reference: reference.trim()
+    }, { headers: new HttpHeaders({ 'Idempotency-Key': idempotencyKey }) }));
+  }
+
   async updateReservationStatus(id: string, status: ReservationStatus): Promise<Reservation> {
     if (this.isDemoMode) {
       const current = this.reservations().find((item) => item.id === id);
@@ -359,7 +388,18 @@ export class StayManagerApiService {
   }
 
   private normalizeGuestPortal(item: GuestPortalReservation): GuestPortalReservation {
-    return { ...item, amountPaid: Number(item.amountPaid), balance: Number(item.balance), price: {
+    return {
+      ...item, amountPaid: Number(item.amountPaid), balance: Number(item.balance),
+      pendingPaymentAmount: Number(item.pendingPaymentAmount ?? 0),
+      pendingPaymentCount: Number(item.pendingPaymentCount ?? 0),
+      paymentInstructions: {
+        enabled: Boolean(item.paymentInstructions?.enabled),
+        nequiNumber: item.paymentInstructions?.nequiNumber ?? '',
+        accountHolder: item.paymentInstructions?.accountHolder ?? '',
+        bankInstructions: item.paymentInstructions?.bankInstructions ?? '',
+        acceptedMethods: [...(item.paymentInstructions?.acceptedMethods ?? [])]
+      },
+      price: {
       ...item.price,
       accommodationSubtotal: Number(item.price.accommodationSubtotal),
       cleaningFee: Number(item.price.cleaningFee),
@@ -370,6 +410,8 @@ export class StayManagerApiService {
 
   private toDemoGuestPortal(item: Reservation): GuestPortalReservation {
     const cancellable = ['PENDING_PAYMENT', 'CONFIRMED'].includes(item.status) && item.checkIn > this.localDate(new Date());
+    const pendingPayments = this.payments().filter((payment) =>
+      payment.reservationId === item.id && payment.status === 'PENDING');
     return {
       code: item.code, accommodationName: item.accommodationName,
       propertyName: this.accommodationById(item.accommodationId)?.propertyName || 'Refugios del Bosque',
@@ -377,7 +419,14 @@ export class StayManagerApiService {
       guestName: item.guest.fullName, guestEmail: item.guest.email, guestPhone: item.guest.phone,
       checkIn: item.checkIn, checkOut: item.checkOut, adults: item.adults, children: item.children,
       status: item.status, price: item.price, amountPaid: item.amountPaid, balance: item.balance,
-      cancellable, notes: item.notes
+      cancellable, notes: item.notes,
+      pendingPaymentAmount: pendingPayments.reduce((sum, payment) => sum + Number(payment.amount), 0),
+      pendingPaymentCount: pendingPayments.length,
+      paymentInstructions: {
+        enabled: true, nequiNumber: '300 000 0000', accountHolder: 'Alojamiento Demo',
+        bankInstructions: 'Bancolombia · Cuenta de ahorros demo 000-000000-00',
+        acceptedMethods: ['NEQUI', 'BANK_TRANSFER']
+      }
     };
   }
 
