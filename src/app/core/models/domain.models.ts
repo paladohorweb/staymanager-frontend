@@ -162,6 +162,18 @@ export interface GuestPortalReservation {
   notes: string;
 }
 
+export type NotificationType = 'RESERVATION' | 'PAYMENT' | 'STAY' | 'SYSTEM';
+
+export interface AppNotification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  link: string;
+  readAt: string | null;
+  createdAt: string;
+}
+
 export interface ApiProblem {
   detail?: string;
   title?: string;

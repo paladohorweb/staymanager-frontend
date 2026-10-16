@@ -215,6 +215,19 @@ textarea { resize: vertical; }
 .top-actions { display: flex; align-items: center; gap: 18px; }
 .icon-button { width: 38px; height: 38px; border: 1px solid var(--line); background: #fff; border-radius: 9px; cursor: pointer; position: relative; }
 .icon-button i { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: var(--coral); top: 7px; right: 7px; }
+.icon-button > .bi { position: static; width: auto; height: auto; background: transparent; font-size: 1rem; }
+.notification-wrap { position: relative; }
+.notification-count { position: absolute; min-width: 17px; height: 17px; padding: 0 4px; right: -6px; top: -6px; display: grid; place-items: center; border-radius: 9px; background: var(--coral); color: #fff; border: 2px solid #fff; font-size: .55rem; font-weight: 800; }
+.notification-panel { position: absolute; z-index: 80; width: min(380px, calc(100vw - 30px)); max-height: 430px; overflow: auto; right: 0; top: 48px; background: #fff; border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); }
+.notification-header { padding: 15px 17px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); }
+.notification-header small { margin: 0; }
+.notification-item { display: grid; grid-template-columns: 35px 1fr; gap: 11px; padding: 14px 17px; color: var(--ink); border-bottom: 1px solid var(--line); text-decoration: none; }
+.notification-item.unread { background: var(--primary-soft); }
+.notification-item:hover { background: #f8fafc; }
+.notification-item strong,.notification-item small { display: block; }
+.notification-item small { margin-top: 4px; line-height: 1.45; }
+.notification-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; background: #fff; color: var(--primary); }
+.notification-empty { padding: 24px 17px; margin: 0; text-align: center; color: var(--muted); }
 .user-menu { display: flex; align-items: center; gap: 9px; }
 .user-menu strong { font-size: .76rem; }
 .avatar { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--primary-soft); color: var(--primary); font-size: .68rem; font-weight: 850; }
@@ -382,3 +395,4 @@ td > small { color: var(--muted); font-size: .61rem; margin-top: 4px; }
   .arrival-item { grid-template-columns: 44px 1fr auto; }.arrival-value { display: none; }.quick-grid { grid-template-columns: 1fr; }
   .simple-modal, .success-modal { padding: 30px 22px; }
 }
+

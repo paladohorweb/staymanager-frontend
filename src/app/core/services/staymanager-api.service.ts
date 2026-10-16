@@ -3,6 +3,7 @@ import { computed, Injectable, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import {
   Accommodation,
+  AppNotification,
   AvailabilityResponse,
   BookingRequest,
   DashboardSummary,
@@ -39,6 +40,8 @@ export class StayManagerApiService {
   readonly reservations = signal<Reservation[]>([]);
   readonly payments = signal<Payment[]>([]);
   readonly dashboard = signal<DashboardSummary | null>(null);
+  readonly notifications = signal<AppNotification[]>([]);
+  readonly unreadNotifications = computed(() => this.notifications().filter((item) => !item.readAt).length);
   readonly loading = signal(false);
   readonly error = signal('');
 
@@ -92,18 +95,20 @@ export class StayManagerApiService {
     this.loading.set(true);
     this.error.set('');
     try {
-      const [properties, accommodations, reservations, payments, dashboard] = await Promise.all([
+      const [properties, accommodations, reservations, payments, dashboard, notifications] = await Promise.all([
         firstValueFrom(this.http.get<Property[]>(`${this.api}/admin/properties`)),
         firstValueFrom(this.http.get<Accommodation[]>(`${this.api}/admin/accommodations`)),
         firstValueFrom(this.http.get<Reservation[]>(`${this.api}/admin/reservations`)),
         firstValueFrom(this.http.get<Payment[]>(`${this.api}/admin/payments`)),
-        firstValueFrom(this.http.get<DashboardSummary>(`${this.api}/admin/dashboard`))
+        firstValueFrom(this.http.get<DashboardSummary>(`${this.api}/admin/dashboard`)),
+        firstValueFrom(this.http.get<AppNotification[]>(`${this.api}/admin/notifications`))
       ]);
       this.properties.set(properties);
       this.accommodations.set(accommodations.map((item) => this.normalizeAccommodation(item)));
       this.reservations.set(reservations.map((item) => this.normalizeReservation(item)));
       this.payments.set(payments);
       this.dashboard.set(dashboard);
+      this.notifications.set(notifications);
     } catch (error) {
       this.error.set(this.errors.message(error, 'No fue posible cargar el panel administrativo.'));
       throw error;
@@ -268,6 +273,20 @@ export class StayManagerApiService {
     return normalized;
   }
 
+  async markNotificationRead(id: string): Promise<void> {
+    const current = this.notifications().find((item) => item.id === id);
+    if (!current || current.readAt) return;
+    if (this.isDemoMode) {
+      this.notifications.update((items) => items.map((item) => item.id === id
+        ? { ...item, readAt: new Date().toISOString() } : item));
+      return;
+    }
+    const updated = await firstValueFrom(
+      this.http.patch<AppNotification>(`${this.api}/admin/notifications/${id}/read`, {})
+    );
+    this.notifications.update((items) => items.map((item) => item.id === id ? updated : item));
+  }
+
   resetDemoData(): void {
     if (!this.isDemoMode) return;
     Object.values(this.demoKeys).forEach((key) => localStorage.removeItem(key));
@@ -323,6 +342,10 @@ export class StayManagerApiService {
     this.accommodations.set(this.loadDemo(this.demoKeys.accommodations, DEMO_ACCOMMODATIONS));
     this.reservations.set(this.loadDemo(this.demoKeys.reservations, DEMO_RESERVATIONS));
     this.payments.set(this.loadDemo(this.demoKeys.payments, DEMO_PAYMENTS));
+    this.notifications.set([
+      { id: 'demo-reservation', type: 'RESERVATION', title: 'Nueva reserva demo', message: 'María solicitó Cabaña Mirador.', link: '/admin/reservas', readAt: null, createdAt: new Date().toISOString() },
+      { id: 'demo-payment', type: 'PAYMENT', title: 'Pago validado', message: 'Se registró un anticipo de una reserva.', link: '/admin/pagos', readAt: null, createdAt: new Date(Date.now() - 3600000).toISOString() }
+    ]);
     this.error.set('');
     this.updateDemoDashboard();
   }
