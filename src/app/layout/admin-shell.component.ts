@@ -58,7 +58,8 @@ export class AdminShellComponent {
     router.events.pipe(filter((event) => event instanceof NavigationEnd), takeUntilDestroyed(destroyRef))
       .subscribe(() => this.closePanels());
   }
-  toggleSidebar(): void { this.sidebarOpen.update((open) => !open); }\n  closePanels(): void { this.sidebarOpen.set(false); this.notificationsOpen.set(false); }
+  toggleSidebar(): void { this.sidebarOpen.update((open) => !open); }
+  closePanels(): void { this.sidebarOpen.set(false); this.notificationsOpen.set(false); }
   toggleNotifications(event: Event): void { event.stopPropagation(); this.notificationsOpen.update((open) => !open); }
   @HostListener('document:keydown.escape') onEscape(): void { this.closePanels(); }
   @HostListener('document:click', ['$event']) onDocumentClick(event: Event): void {
