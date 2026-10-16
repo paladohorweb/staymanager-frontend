@@ -44,7 +44,8 @@ import { currency, shortDate } from '../../shared/utils/format.utils';
               @if (loading()) { <span class="spinner-border spinner-border-sm me-2"></span> } Ver mi estadía
             </button>
           </form>
-        } @else if (reservation(); as item) {
+        } @else {
+          @if (reservation(); as item) {
           <div class="portal-heading mb-4"><div><button class="text-button p-0 mb-2" type="button" (click)="reset()">← Consultar otra</button><h2>Hola, {{ firstName(item.guestName) }}</h2><p>{{ item.propertyName }} · {{ item.propertyLocation }}</p></div><span class="status-pill">{{ statusLabel(item.status) }}</span></div>
           <div class="portal-grid">
             <article class="card-panel stay-card">
@@ -60,6 +61,7 @@ import { currency, shortDate } from '../../shared/utils/format.utils';
             </article>
             <aside class="card-panel payment-card"><span class="eyebrow">PAGOS</span><div class="payment-line"><span>Total</span><strong>{{ money(item.price.total) }}</strong></div><div class="payment-line"><span>Pagado</span><strong>{{ money(item.amountPaid) }}</strong></div><div class="payment-line balance"><span>Saldo pendiente</span><strong>{{ money(item.balance) }}</strong></div><small>Los pagos son validados por el alojamiento. Conserva siempre tu referencia.</small></aside>
           </div>
+          }
         }
       </div>
     </section>
