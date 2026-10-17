@@ -31,6 +31,11 @@ export class TokenStorageService {
     }
   }
 
+  updateUser(user: SessionUser | null): void {
+    if (user) localStorage.setItem(USER_KEY, JSON.stringify(user));
+    else localStorage.removeItem(USER_KEY);
+  }
+
   clear(): void {
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);

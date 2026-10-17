@@ -1,9 +1,23 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, Injectable, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { AuthTokens, SessionUser } from '../models/domain.models';
+import { AuthMessage, AuthTokens, LoginResponse, MfaSetup, SessionUser } from '../models/domain.models';
 import { TokenStorageService } from './token-storage.service';
 import { environment } from '../../../environments/environment';
+
+export interface LoginResult {
+  mfaRequired: boolean;
+  challengeToken: string | null;
+  user: SessionUser | null;
+}
+
+export interface RegistrationPayload {
+  fullName: string;
+  organizationName: string;
+  email: string;
+  password: string;
+  acceptedTerms: boolean;
+}
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -12,23 +26,68 @@ export class AuthService {
 
   constructor(private readonly http: HttpClient, private readonly storage: TokenStorageService) {}
 
-  async login(email: string, password: string): Promise<SessionUser> {
+  async login(email: string, password: string): Promise<LoginResult> {
     if (environment.demoMode) {
       if (email.trim().toLowerCase() !== 'owner@demo.com' || password !== 'Demo123*') {
         throw new Error('Correo o contraseña incorrectos. Usa la cuenta de demostración.');
       }
       const user: SessionUser = {
         id: 'user-demo', organizationId: 'org-demo', fullName: 'Valentina Gómez',
-        email: 'owner@demo.com', role: 'OWNER'
+        email: 'owner@demo.com', role: 'OWNER', mfaEnabled: false
       };
-      this.storage.save({ accessToken: 'demo-access-token', refreshToken: 'demo-refresh-token', tokenType: 'Bearer', expiresIn: 3600, user });
-      this.currentUser.set(user);
-      return user;
+      this.persist({ accessToken: 'demo-access-token', refreshToken: 'demo-refresh-token', tokenType: 'Bearer', expiresIn: 3600, user });
+      return { mfaRequired: false, challengeToken: null, user };
     }
-    const session = await firstValueFrom(this.http.post<AuthTokens>(`${environment.apiUrl}/auth/login`, { email: email.trim(), password }));
-    this.storage.save(session);
-    this.currentUser.set(session.user);
+    const response = await firstValueFrom(this.http.post<LoginResponse>(`${environment.apiUrl}/auth/login`, { email: email.trim(), password }));
+    if (response.mfaRequired) return { mfaRequired: true, challengeToken: response.challengeToken ?? null, user: null };
+    const session = this.requireTokens(response);
+    this.persist(session);
+    return { mfaRequired: false, challengeToken: null, user: session.user };
+  }
+
+  async verifyMfa(challengeToken: string, code: string): Promise<SessionUser> {
+    const session = await firstValueFrom(this.http.post<AuthTokens>(`${environment.apiUrl}/auth/mfa/verify`, { challengeToken, code: code.trim() }));
+    this.persist(session);
     return session.user;
+  }
+
+  async register(payload: RegistrationPayload): Promise<SessionUser> {
+    if (environment.demoMode) throw new Error('El registro está desactivado dentro de la demo pública.');
+    const session = await firstValueFrom(this.http.post<AuthTokens>(`${environment.apiUrl}/auth/register`, {
+      ...payload, fullName: payload.fullName.trim(), organizationName: payload.organizationName.trim(), email: payload.email.trim()
+    }));
+    this.persist(session);
+    return session.user;
+  }
+
+  requestPasswordReset(email: string): Promise<AuthMessage> {
+    return firstValueFrom(this.http.post<AuthMessage>(`${environment.apiUrl}/auth/password/forgot`, { email: email.trim() }));
+  }
+
+  resetPassword(token: string, newPassword: string): Promise<AuthMessage> {
+    return firstValueFrom(this.http.post<AuthMessage>(`${environment.apiUrl}/auth/password/reset`, { token, newPassword }));
+  }
+
+  changePassword(currentPassword: string, newPassword: string): Promise<AuthMessage> {
+    return firstValueFrom(this.http.post<AuthMessage>(`${environment.apiUrl}/auth/password/change`, { currentPassword, newPassword }));
+  }
+
+  setupMfa(): Promise<MfaSetup> {
+    return firstValueFrom(this.http.post<MfaSetup>(`${environment.apiUrl}/auth/mfa/setup`, {}));
+  }
+
+  async confirmMfa(code: string): Promise<string[]> {
+    const response = await firstValueFrom(this.http.post<{ recoveryCodes: string[] }>(`${environment.apiUrl}/auth/mfa/confirm`, { code: code.trim() }));
+    this.currentUser.update((user) => user ? { ...user, mfaEnabled: true } : user);
+    this.storage.updateUser(this.currentUser());
+    return response.recoveryCodes;
+  }
+
+  async disableMfa(password: string, code: string): Promise<AuthMessage> {
+    const response = await firstValueFrom(this.http.post<AuthMessage>(`${environment.apiUrl}/auth/mfa/disable`, { password, code: code.trim() }));
+    this.currentUser.update((user) => user ? { ...user, mfaEnabled: false } : user);
+    this.storage.updateUser(this.currentUser());
+    return response;
   }
 
   async refresh(): Promise<void> {
@@ -36,19 +95,31 @@ export class AuthService {
     const refreshToken = this.storage.refreshToken;
     if (!refreshToken) throw new Error('La sesión no tiene token de renovación.');
     const session = await firstValueFrom(this.http.post<AuthTokens>(`${environment.apiUrl}/auth/refresh`, { refreshToken }));
-    this.storage.save(session);
-    this.currentUser.set(session.user);
+    this.persist(session);
   }
 
   async loadProfile(): Promise<void> {
-    if (environment.demoMode) return;
-    if (!this.storage.accessToken) return;
+    if (environment.demoMode || !this.storage.accessToken) return;
     const user = await firstValueFrom(this.http.get<SessionUser>(`${environment.apiUrl}/auth/me`));
     this.currentUser.set(user);
+    this.storage.updateUser(user);
   }
 
   logout(): void {
     this.storage.clear();
     this.currentUser.set(null);
+  }
+
+  private persist(session: AuthTokens): void {
+    this.storage.save(session);
+    this.currentUser.set(session.user);
+  }
+
+  private requireTokens(response: LoginResponse): AuthTokens {
+    if (!response.accessToken || !response.refreshToken || !response.tokenType || !response.user) {
+      throw new Error('La respuesta de autenticación está incompleta.');
+    }
+    return { accessToken: response.accessToken, refreshToken: response.refreshToken, tokenType: response.tokenType,
+      expiresIn: response.expiresIn ?? 0, user: response.user };
   }
 }

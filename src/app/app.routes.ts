@@ -20,6 +20,9 @@ export const routes: Routes = [
     ]
   },
   { path: 'login', loadComponent: () => import('./features/public/login-page.component').then((m) => m.LoginPageComponent), data: { seo: { title: 'Acceso administrativo | StayManager', description: 'Acceso seguro al centro de operaciones del alojamiento.', noIndex: true } } },
+  { path: 'registro', loadComponent: () => import('./features/public/register-page.component').then((m) => m.RegisterPageComponent), data: { seo: { title: 'Crear cuenta | StayManager', description: 'Crea el espacio operativo de tu alojamiento en StayManager.', noIndex: true } } },
+  { path: 'recuperar-contrasena', loadComponent: () => import('./features/public/forgot-password-page.component').then((m) => m.ForgotPasswordPageComponent), data: { seo: { title: 'Recuperar contraseña | StayManager', description: 'Solicita un enlace seguro para recuperar tu cuenta.', noIndex: true } } },
+  { path: 'restablecer-contrasena', loadComponent: () => import('./features/public/reset-password-page.component').then((m) => m.ResetPasswordPageComponent), data: { seo: { title: 'Nueva contraseña | StayManager', description: 'Define una nueva contraseña segura para tu cuenta.', noIndex: true } } },
   {
     path: 'admin', component: AdminShellComponent, canActivate: [authGuard], children: [
       { path: '', loadComponent: () => import('./features/admin/dashboard-page.component').then((m) => m.DashboardPageComponent) },
@@ -28,7 +31,8 @@ export const routes: Routes = [
       { path: 'pagos', loadComponent: () => import('./features/admin/payments-page.component').then((m) => m.PaymentsPageComponent) },
       { path: 'operacion', loadComponent: () => import('./features/admin/operations-page.component').then((m) => m.OperationsPageComponent) },
       { path: 'limpieza', loadComponent: () => import('./features/admin/housekeeping-page.component').then((m) => m.HousekeepingPageComponent) },
-      { path: 'configuracion', loadComponent: () => import('./features/admin/settings-page.component').then((m) => m.SettingsPageComponent) }
+      { path: 'configuracion', loadComponent: () => import('./features/admin/settings-page.component').then((m) => m.SettingsPageComponent) },
+      { path: 'seguridad', loadComponent: () => import('./features/admin/security-page.component').then((m) => m.SecurityPageComponent) }
     ]
   },
   { path: '**', loadComponent: () => import('./features/public/not-found-page.component').then((m) => m.NotFoundPageComponent), data: { seo: { title: 'Página no encontrada | StayManager', description: 'La página solicitada no existe o cambió de ubicación.', noIndex: true } } }

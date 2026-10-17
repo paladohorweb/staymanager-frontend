@@ -103,6 +103,7 @@ export interface SessionUser {
   fullName: string;
   email: string;
   role: 'OWNER' | 'MANAGER' | 'RECEPTIONIST';
+  mfaEnabled: boolean;
 }
 
 export interface AuthTokens {
@@ -111,6 +112,21 @@ export interface AuthTokens {
   tokenType: string;
   expiresIn: number;
   user: SessionUser;
+}
+
+export interface LoginResponse extends Partial<AuthTokens> {
+  mfaRequired: boolean;
+  challengeToken: string | null;
+}
+
+export interface AuthMessage {
+  message: string;
+  developmentToken: string | null;
+}
+
+export interface MfaSetup {
+  secret: string;
+  otpauthUri: string;
 }
 
 export interface BookingRequest {

@@ -7,7 +7,7 @@ import { TokenStorageService } from '../services/token-storage.service';
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const storage = inject(TokenStorageService);
   const refresh = inject(SessionRefreshService);
-  const isAuthRequest = request.url.includes('/auth/login') || request.url.includes('/auth/refresh');
+  const isAuthRequest = request.url.includes('/auth/login') || request.url.includes('/auth/refresh') || request.url.includes('/auth/mfa/verify');
   const authenticatedRequest = storage.accessToken && !isAuthRequest
     ? request.clone({ setHeaders: { Authorization: `Bearer ${storage.accessToken}` } })
     : request;

@@ -26,6 +26,7 @@ import { FloatingWhatsappComponent } from '../shared/components/floating-whatsap
           <a routerLink="/admin/operacion" routerLinkActive="active" title="Check-in y check-out"><span><i class="bi bi-box-arrow-in-right"></i></span><b class="sidebar-detail">Check-in / out</b></a>
           <a routerLink="/admin/limpieza" routerLinkActive="active" title="Limpieza"><span><i class="bi bi-stars"></i></span><b class="sidebar-detail">Limpieza</b></a>
           <a routerLink="/admin/configuracion" routerLinkActive="active" title="Configuración"><span><i class="bi bi-gear"></i></span><b class="sidebar-detail">Configuración</b></a>
+          <a routerLink="/admin/seguridad" routerLinkActive="active" title="Cuenta y seguridad"><span><i class="bi bi-shield-lock"></i></span><b class="sidebar-detail">Cuenta y seguridad</b></a>
         </nav>
         <a routerLink="/" class="back-public" (click)="closePanels()" title="Ver portal público"><i class="bi bi-arrow-left"></i><span class="sidebar-detail"> Ver portal público</span></a>
       </aside>
