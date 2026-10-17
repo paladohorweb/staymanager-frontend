@@ -116,6 +116,14 @@ src/environments/environment.demo.ts  demoMode: true
 
 Netlify reemplaza el archivo de entorno durante `build:demo`. No se detecta el modo mediante el dominio ni mediante lógica improvisada en tiempo de ejecución.
 
+## Experiencias por rol en el modo conectado
+
+- El propietario completa un onboarding, administra su perfil y negocio, crea propiedades y edita alojamientos.
+- El huésped crea una cuenta `CLIENT`, completa su perfil y entra a un portal privado de reservas.
+- Las nuevas reservas realizadas con una sesión de huésped se vinculan automáticamente cuando el correo coincide.
+- Las reservas anteriores se vinculan con código, sin listar estadías únicamente por conocer una dirección de correo.
+- El login dirige automáticamente al panel administrativo o al portal del huésped según el rol.
+
 ## Funcionalidades del modo demo
 
 - Catálogo público y búsqueda por capacidad.
