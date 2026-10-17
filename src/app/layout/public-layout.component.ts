@@ -5,6 +5,7 @@ import { filter } from 'rxjs';
 import { StayManagerApiService } from '../core/services/staymanager-api.service';
 import { environment } from '../../environments/environment';
 import { FloatingWhatsappComponent } from '../shared/components/floating-whatsapp.component';
+import { AuthService } from '../core/services/auth.service';
 
 @Component({
   selector: 'app-public-layout',
@@ -31,11 +32,11 @@ import { FloatingWhatsappComponent } from '../shared/components/floating-whatsap
         <nav id="public-navigation" [class.open]="menuOpen()" aria-label="Navegación principal">
           <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" (click)="closeMenu()">Inicio</a>
           <a routerLink="/alojamientos" routerLinkActive="active" (click)="closeMenu()">Alojamientos</a>
-          <a routerLink="/mis-reservas" routerLinkActive="active" (click)="closeMenu()">Mis reservas</a>
+          <a [routerLink]="reservationsRoute()" routerLinkActive="active" (click)="closeMenu()">Mis reservas</a>
           <a routerLink="/experiencias" routerLinkActive="active" (click)="closeMenu()">Experiencias</a>
           <a routerLink="/como-llegar" routerLinkActive="active" (click)="closeMenu()">Cómo llegar</a>
           @if (demoMode) { <a routerLink="/demo" routerLinkActive="active" (click)="closeMenu()">Recorrido demo</a> }
-          <a routerLink="/login" class="btn btn-outline btn-small" (click)="closeMenu()">Panel administrativo</a>
+          <a [routerLink]="accountRoute()" class="btn btn-outline btn-small" (click)="closeMenu()">{{auth.isAuthenticated()?'Mi cuenta':'Ingresar'}}</a>
         </nav>
       </div>
     </header>
@@ -44,7 +45,7 @@ import { FloatingWhatsappComponent } from '../shared/components/floating-whatsap
     <footer class="public-footer">
       <div class="container footer-grid">
         <div><a routerLink="/" class="brand brand-light"><span class="brand-mark">S</span><span><strong>Stay</strong>Manager</span></a><p>Tecnología para alojamientos memorables y operaciones rentables.</p></div>
-        <div><h4>Explora</h4><a routerLink="/alojamientos">Alojamientos</a><a routerLink="/experiencias">Experiencias</a><a routerLink="/como-llegar">Cómo llegar</a><a routerLink="/mis-reservas">Mis reservas</a>@if(demoMode){<a routerLink="/demo">Recorrido demo</a>}<a routerLink="/login">Acceso administrativo</a></div>
+        <div><h4>Explora</h4><a routerLink="/alojamientos">Alojamientos</a><a routerLink="/experiencias">Experiencias</a><a routerLink="/como-llegar">Cómo llegar</a><a [routerLink]="reservationsRoute()">Mis reservas</a>@if(demoMode){<a routerLink="/demo">Recorrido demo</a>}<a [routerLink]="accountRoute()">Mi cuenta</a></div>
         <div><h4>Información</h4><a routerLink="/aviso-legal">Aviso legal</a><a routerLink="/politica-privacidad">Privacidad</a><a routerLink="/politica-cookies">Cookies</a></div>
         <div><h4>Contacto</h4><span>Colombia</span><a [href]="whatsappUrl" target="_blank" rel="noopener noreferrer">+57 323 309 8671</a><span>Atención por WhatsApp</span></div>
       </div>
@@ -61,6 +62,7 @@ export class PublicLayoutComponent {
 
   constructor(
     store: StayManagerApiService,
+    readonly auth: AuthService,
     router: Router,
     destroyRef: DestroyRef,
     private readonly host: ElementRef<HTMLElement>
@@ -72,6 +74,8 @@ export class PublicLayoutComponent {
 
   toggleMenu(event: Event): void { event.stopPropagation(); this.menuOpen.update((open) => !open); }
   closeMenu(): void { this.menuOpen.set(false); }
+  accountRoute(): string { return this.auth.isAuthenticated() ? this.auth.landingRoute() : '/login'; }
+  reservationsRoute(): string { return this.auth.currentUser()?.role === 'CLIENT' ? '/cliente' : '/mis-reservas'; }
 
   @HostListener('window:scroll') onScroll(): void { this.scrolled.set(window.scrollY > 20); }
   @HostListener('document:keydown.escape') onEscape(): void { this.closeMenu(); }

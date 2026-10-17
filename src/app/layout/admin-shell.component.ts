@@ -42,7 +42,7 @@ import { FloatingWhatsappComponent } from '../shared/components/floating-whatsap
               <button class="icon-button" type="button" aria-label="Notificaciones" (click)="toggleNotifications($event)"><i class="bi bi-bell"></i>@if (store.unreadNotifications()) { <span class="notification-count">{{ store.unreadNotifications() }}</span> }</button>
               @if (notificationsOpen()) { <div class="notification-panel"><div class="notification-header"><strong>Notificaciones</strong><small>{{ store.unreadNotifications() }} sin leer</small></div>@for (item of store.notifications(); track item.id) { <a [routerLink]="item.link || '/admin'" class="notification-item" [class.unread]="!item.readAt" (click)="openNotification(item.id)"><span class="notification-icon"><i [class]="notificationIcon(item.type)"></i></span><span><strong>{{ item.title }}</strong><small>{{ item.message }}</small></span></a> } @empty { <p class="notification-empty">No hay novedades por ahora.</p> }</div> }
             </div>
-            <div class="user-menu"><span class="avatar">VG</span><div><strong>{{ auth.currentUser()?.fullName }}</strong><small>Propietaria</small></div></div>
+            <div class="user-menu"><span class="avatar">{{initials()}}</span><div><strong>{{ auth.currentUser()?.fullName }}</strong><small>{{roleLabel()}}</small></div></div>
             <button class="text-button" type="button" (click)="logout()"><i class="bi bi-box-arrow-right me-1"></i>Salir</button>
           </div>
         </header>
@@ -82,6 +82,8 @@ export class AdminShellComponent {
   logout(): void { this.auth.logout(); void this.alerts.toast('Sesión cerrada', 'info'); void this.router.navigate(['/login']); }
   openNotification(id: string): void { this.notificationsOpen.set(false); void this.store.markNotificationRead(id); }
   notificationIcon(type: string): string { return type === 'PAYMENT' ? 'bi bi-cash-coin' : type === 'STAY' ? 'bi bi-calendar-check' : 'bi bi-calendar-plus'; }
+  initials(): string { return (this.auth.currentUser()?.fullName ?? 'SM').split(/\s+/).slice(0,2).map((part)=>part[0]).join('').toUpperCase(); }
+  roleLabel(): string { return ({OWNER:'Propietario',MANAGER:'Administrador',RECEPTIONIST:'Recepción',HOUSEKEEPING:'Limpieza',CLIENT:'Huésped'} as Record<string,string>)[this.auth.currentUser()?.role ?? ''] ?? 'Equipo'; }
   private readSidebarPreference(): boolean {
     try { return localStorage.getItem('staymanager.admin.sidebar-collapsed') === 'true'; }
     catch { return false; }
