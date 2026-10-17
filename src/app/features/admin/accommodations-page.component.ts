@@ -1,7 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { Accommodation } from '../../core/models/domain.models';
+import { Accommodation, Property } from '../../core/models/domain.models';
 import { AlertService } from '../../core/services/alert.service';
 import { ApiErrorService } from '../../core/services/api-error.service';
 import { StayManagerApiService } from '../../core/services/staymanager-api.service';
@@ -17,10 +17,12 @@ type AccommodationDraft = Omit<Accommodation, 'id' | 'propertyName' | 'propertyL
   template: `
     <section class="admin-heading">
       <div><span class="eyebrow">INVENTARIO Y UBICACIONES</span><h1>Alojamientos</h1><p>Administra tarifas, capacidad y una ruta de llegada independiente para cada cabaña.</p></div>
-      <button class="btn btn-primary" type="button" (click)="openForm()">＋ Nuevo alojamiento</button>
+      <div class="heading-actions"><button class="btn btn-outline" type="button" (click)="openPropertyForm()"><i class="bi bi-pin-map me-1"></i>Nueva propiedad</button><button class="btn btn-primary" type="button" (click)="openForm()" [disabled]="!store.properties().length">＋ Nuevo alojamiento</button></div>
     </section>
 
     <div class="location-note"><i class="bi bi-geo-alt-fill"></i><div><strong>Cada alojamiento tiene su propio destino</strong><span>El mapa, las indicaciones y los mensajes de check-in usarán la ubicación de la cabaña seleccionada.</span></div></div>
+
+    <section class="property-strip"><div><span class="eyebrow">PROPIEDADES</span><strong>{{store.properties().length}} {{store.properties().length===1?'ubicación':'ubicaciones'}}</strong></div>@for(property of store.properties();track property.id){<button type="button" (click)="openPropertyForm(property)"><i class="bi bi-building"></i><span><strong>{{property.name}}</strong><small>{{property.location}}</small></span><i class="bi bi-pencil"></i></button>}@empty{<span class="property-empty">Crea una propiedad antes de agregar alojamientos.</span>}</section>
 
     <section class="admin-accommodation-grid">
       @for (item of store.accommodations(); track item.id) {
@@ -40,6 +42,10 @@ type AccommodationDraft = Omit<Accommodation, 'id' | 'propertyName' | 'propertyL
         <div class="empty-inventory"><i class="bi bi-houses"></i><h2>Aún no hay alojamientos</h2><p>Agrega la primera cabaña y configura su ubicación para publicarla.</p><button class="btn btn-primary" type="button" (click)="openForm()">Crear alojamiento</button></div>
       }
     </section>
+
+    @if(propertyFormOpen()){
+      <div class="modal-backdrop" (click)="closePropertyForm()"><form class="simple-modal property-modal" #propertyForm="ngForm" (ngSubmit)="saveProperty()" (click)="$event.stopPropagation()"><button type="button" class="modal-close" (click)="closePropertyForm()">×</button><span class="eyebrow">{{editingPropertyId()?'EDITAR PROPIEDAD':'NUEVA PROPIEDAD'}}</span><h2>{{editingPropertyId()?'Actualiza la ubicación':'Crea una ubicación'}}</h2><p>Una propiedad agrupa uno o varios alojamientos que pertenecen al mismo lugar.</p><label>Nombre<input name="propertyName" [(ngModel)]="propertyDraft.name" required maxlength="140"></label><label>Ubicación<input name="propertyLocation" [(ngModel)]="propertyDraft.location" required maxlength="180" placeholder="Municipio, departamento"></label><label>Descripción<textarea name="propertyDescription" [(ngModel)]="propertyDraft.description" required maxlength="1000" rows="4"></textarea></label><label>Imagen (URL)<input type="url" name="propertyImage" [(ngModel)]="propertyDraft.imageUrl" maxlength="1000"></label><label class="active-check"><input type="checkbox" name="propertyActive" [(ngModel)]="propertyDraft.active"> Propiedad visible y activa</label><div class="modal-actions"><button type="button" class="btn btn-outline" (click)="closePropertyForm()">Cancelar</button><button class="btn btn-primary" [disabled]="propertyForm.invalid||submittingProperty()">@if(submittingProperty()){<span class="spinner-border spinner-border-sm me-2"></span>}Guardar propiedad</button></div></form></div>
+    }
 
     @if (formOpen()) {
       <div class="modal-backdrop" (click)="closeForm()">
@@ -86,7 +92,7 @@ type AccommodationDraft = Omit<Accommodation, 'id' | 'propertyName' | 'propertyL
     }
   `,
   styles: [`
-    .location-note{display:flex;gap:.8rem;align-items:center;padding:1rem 1.15rem;margin-bottom:1.2rem;border:1px solid #cfe7df;border-radius:14px;background:#edf8f4;color:#155f4d}.location-note>i{font-size:1.35rem}.location-note div{display:flex;flex-direction:column}.location-note span{font-size:.68rem;color:#527369}.admin-stay-image{position:relative}.map-state{position:absolute;right:.7rem;bottom:.7rem;display:flex;gap:.3rem;align-items:center;padding:.35rem .55rem;border-radius:999px;background:#fff4dc;color:#8a5d00;font-size:.58rem;font-weight:800;box-shadow:0 4px 12px rgba(0,0,0,.15)}.map-state.ready{background:#e4f7ed;color:#157347}.cabin-address{display:flex;gap:.45rem;align-items:flex-start;margin:.8rem 0;padding:.65rem .75rem;border-radius:10px;background:#f5f8f7;color:var(--muted);font-size:.65rem}.cabin-address i{color:var(--primary)}.admin-card-footer{align-items:center}.empty-inventory{grid-column:1/-1;padding:4rem 1rem;text-align:center;border:1px dashed var(--line);border-radius:16px;background:#fff}.empty-inventory>i{font-size:2.5rem;color:var(--primary)}.cabin-modal{width:min(920px,calc(100vw - 2rem));max-height:92vh;overflow:auto}.modal-intro{margin-top:-.4rem}.form-section{padding:1.15rem;margin:1rem 0;border:1px solid var(--line);border-radius:14px;background:#fbfcfc}.section-title{display:flex;gap:.75rem;align-items:flex-start;margin-bottom:1rem}.section-title>span{width:30px;height:30px;display:grid;place-items:center;flex:0 0 auto;border-radius:9px;background:var(--primary);color:#fff;font-size:.68rem;font-weight:900}.section-title h3{margin:0;font-size:.82rem}.section-title p{margin:.2rem 0 0;font-size:.63rem}.form-grid.three{grid-template-columns:repeat(3,1fr)}label small{display:block;margin:.2rem 0 .4rem;color:var(--muted);font-size:.58rem}.location-section{background:#f7fbf9}.location-tools{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-top:.8rem}.map-preview{margin-top:1rem}.map-preview app-google-map{display:block}.modal-actions{position:sticky;bottom:-1px;display:flex;justify-content:flex-end;gap:.6rem;padding:1rem 0 .1rem;background:#fff}@media(max-width:720px){.form-grid.three{grid-template-columns:1fr}.cabin-modal{padding:1rem}.location-note{align-items:flex-start}.location-tools,.modal-actions{align-items:stretch;flex-direction:column}.modal-actions .btn{width:100%}}@media(max-width:560px){.form-grid.two{grid-template-columns:1fr}.span-two{grid-column:auto}.admin-card-footer{align-items:stretch;flex-direction:column}.admin-card-footer .btn,.admin-card-footer .text-link{text-align:center;width:100%}}
+    .heading-actions{display:flex;gap:.6rem}.location-note{display:flex;gap:.8rem;align-items:center;padding:1rem 1.15rem;margin-bottom:1rem;border:1px solid #cfe7df;border-radius:14px;background:#edf8f4;color:#155f4d}.location-note>i{font-size:1.35rem}.location-note div{display:flex;flex-direction:column}.location-note span{font-size:.68rem;color:#527369}.property-strip{display:flex;gap:.65rem;align-items:stretch;overflow:auto;margin-bottom:1.2rem;padding:.8rem;border:1px solid var(--line);border-radius:14px;background:#fff}.property-strip>div{display:flex;min-width:100px;flex-direction:column;justify-content:center}.property-strip>div strong{font-size:.75rem}.property-strip>button{min-width:210px;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:.55rem;padding:.65rem;border:1px solid var(--line);border-radius:10px;background:#f8faf9;text-align:left;color:var(--text)}.property-strip>button>span{display:flex;flex-direction:column}.property-strip>button small{font-size:.58rem;color:var(--muted)}.property-empty{align-self:center;font-size:.67rem;color:var(--muted)}.property-modal{width:min(560px,calc(100vw - 2rem))}.property-modal p{font-size:.7rem}.active-check{display:flex;gap:.5rem;align-items:center}.active-check input{width:auto}.admin-stay-image{position:relative}.map-state{position:absolute;right:.7rem;bottom:.7rem;display:flex;gap:.3rem;align-items:center;padding:.35rem .55rem;border-radius:999px;background:#fff4dc;color:#8a5d00;font-size:.58rem;font-weight:800;box-shadow:0 4px 12px rgba(0,0,0,.15)}.map-state.ready{background:#e4f7ed;color:#157347}.cabin-address{display:flex;gap:.45rem;align-items:flex-start;margin:.8rem 0;padding:.65rem .75rem;border-radius:10px;background:#f5f8f7;color:var(--muted);font-size:.65rem}.cabin-address i{color:var(--primary)}.admin-card-footer{align-items:center}.empty-inventory{grid-column:1/-1;padding:4rem 1rem;text-align:center;border:1px dashed var(--line);border-radius:16px;background:#fff}.empty-inventory>i{font-size:2.5rem;color:var(--primary)}.cabin-modal{width:min(920px,calc(100vw - 2rem));max-height:92vh;overflow:auto}.modal-intro{margin-top:-.4rem}.form-section{padding:1.15rem;margin:1rem 0;border:1px solid var(--line);border-radius:14px;background:#fbfcfc}.section-title{display:flex;gap:.75rem;align-items:flex-start;margin-bottom:1rem}.section-title>span{width:30px;height:30px;display:grid;place-items:center;flex:0 0 auto;border-radius:9px;background:var(--primary);color:#fff;font-size:.68rem;font-weight:900}.section-title h3{margin:0;font-size:.82rem}.section-title p{margin:.2rem 0 0;font-size:.63rem}.form-grid.three{grid-template-columns:repeat(3,1fr)}label small{display:block;margin:.2rem 0 .4rem;color:var(--muted);font-size:.58rem}.location-section{background:#f7fbf9}.location-tools{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-top:.8rem}.map-preview{margin-top:1rem}.map-preview app-google-map{display:block}.modal-actions{position:sticky;bottom:-1px;display:flex;justify-content:flex-end;gap:.6rem;padding:1rem 0 .1rem;background:#fff}@media(max-width:720px){.form-grid.three{grid-template-columns:1fr}.cabin-modal{padding:1rem}.location-note{align-items:flex-start}.location-tools,.modal-actions{align-items:stretch;flex-direction:column}.modal-actions .btn{width:100%}}@media(max-width:560px){.admin-heading,.heading-actions{align-items:stretch;flex-direction:column}.form-grid.two{grid-template-columns:1fr}.span-two{grid-column:auto}.admin-card-footer{align-items:stretch;flex-direction:column}.admin-card-footer .btn,.admin-card-footer .text-link{text-align:center;width:100%}}
   `]
 })
 export class AccommodationsPageComponent {
@@ -94,6 +100,10 @@ export class AccommodationsPageComponent {
   readonly formOpen = signal(false);
   readonly editingId = signal<string | null>(null);
   readonly submitting = signal(false);
+  readonly propertyFormOpen = signal(false);
+  readonly editingPropertyId = signal<string | null>(null);
+  readonly submittingProperty = signal(false);
+  propertyDraft: Omit<Property, 'id' | 'slug'> = { name: '', location: '', description: '', imageUrl: '', active: true };
   draft: AccommodationDraft;
   amenitiesText = '';
 
@@ -116,6 +126,27 @@ export class AccommodationsPageComponent {
   }
 
   closeForm(): void { if (!this.submitting()) this.formOpen.set(false); }
+
+  openPropertyForm(property?: Property): void {
+    this.editingPropertyId.set(property?.id ?? null);
+    this.propertyDraft = property ? { name: property.name, location: property.location, description: property.description,
+      imageUrl: property.imageUrl, active: property.active } : { name: '', location: '', description: '', imageUrl: '', active: true };
+    this.propertyFormOpen.set(true);
+  }
+
+  closePropertyForm(): void { if (!this.submittingProperty()) this.propertyFormOpen.set(false); }
+
+  async saveProperty(): Promise<void> {
+    this.submittingProperty.set(true);
+    try {
+      const id = this.editingPropertyId();
+      if (id) await this.store.updateProperty(id, { ...this.propertyDraft });
+      else await this.store.addProperty({ ...this.propertyDraft });
+      this.propertyFormOpen.set(false);
+      await this.alerts.toast(id ? 'Propiedad actualizada' : 'Propiedad creada');
+    } catch (error) { await this.alerts.error('No se pudo guardar la propiedad', this.errors.message(error)); }
+    finally { this.submittingProperty.set(false); }
+  }
 
   useGeneralLocation(): void {
     const settings = this.store.settings();

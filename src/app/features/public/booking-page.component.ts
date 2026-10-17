@@ -5,6 +5,7 @@ import { BookingRequest, PriceBreakdown } from '../../core/models/domain.models'
 import { AlertService } from '../../core/services/alert.service';
 import { ApiErrorService } from '../../core/services/api-error.service';
 import { StayManagerApiService } from '../../core/services/staymanager-api.service';
+import { AuthService } from '../../core/services/auth.service';
 import { currency, optimizedImageUrl } from '../../shared/utils/format.utils';
 
 @Component({
@@ -76,7 +77,8 @@ export class BookingPageComponent {
     route: ActivatedRoute,
     private readonly alerts: AlertService,
     private readonly errors: ApiErrorService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly auth: AuthService
   ) {
     this.accommodationId = route.snapshot.paramMap.get('id') ?? '';
     const defaultGuests = Number(route.snapshot.queryParamMap.get('guests') ?? 2);
@@ -86,7 +88,12 @@ export class BookingPageComponent {
       checkOut: route.snapshot.queryParamMap.get('checkOut') ?? '',
       adults: defaultGuests,
       children: 0,
-      guest: { fullName: '', email: '', phone: '', documentNumber: '' },
+      guest: {
+        fullName: this.auth.currentUser()?.role === 'CLIENT' ? this.auth.currentUser()?.fullName ?? '' : '',
+        email: this.auth.currentUser()?.role === 'CLIENT' ? this.auth.currentUser()?.email ?? '' : '',
+        phone: this.auth.currentUser()?.role === 'CLIENT' ? this.auth.currentUser()?.phone ?? '' : '',
+        documentNumber: this.auth.currentUser()?.role === 'CLIENT' ? this.auth.currentUser()?.documentNumber ?? '' : ''
+      },
       notes: ''
     };
     effect(() => {
@@ -124,7 +131,8 @@ export class BookingPageComponent {
       if (this.website.trim() || Date.now() - this.formStartedAt < 1500) throw new Error('No fue posible validar el formulario. Intenta nuevamente.');
       const reservation = await this.store.createReservation(this.request);
       await this.alerts.success('Reserva solicitada', `Tu código es ${reservation.code}. Consérvalo para identificar tu solicitud.`);
-      await this.router.navigate(['/mis-reservas'], { queryParams: { code: reservation.code, email: reservation.guest.email } });
+      if (this.auth.currentUser()?.role === 'CLIENT') await this.router.navigateByUrl('/cliente');
+      else await this.router.navigate(['/mis-reservas'], { queryParams: { code: reservation.code, email: reservation.guest.email } });
     } catch (error) {
       const message = this.errors.message(error, 'No fue posible crear la reserva.');
       this.error.set(message);

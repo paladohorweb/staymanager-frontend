@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard } from './core/guards/auth.guard';
+import { adminGuard, clientGuard } from './core/guards/auth.guard';
 import { AdminShellComponent } from './layout/admin-shell.component';
 import { PublicLayoutComponent } from './layout/public-layout.component';
 
@@ -24,14 +24,24 @@ export const routes: Routes = [
   { path: 'recuperar-contrasena', loadComponent: () => import('./features/public/forgot-password-page.component').then((m) => m.ForgotPasswordPageComponent), data: { seo: { title: 'Recuperar contraseña | StayManager', description: 'Solicita un enlace seguro para recuperar tu cuenta.', noIndex: true } } },
   { path: 'restablecer-contrasena', loadComponent: () => import('./features/public/reset-password-page.component').then((m) => m.ResetPasswordPageComponent), data: { seo: { title: 'Nueva contraseña | StayManager', description: 'Define una nueva contraseña segura para tu cuenta.', noIndex: true } } },
   {
-    path: 'admin', component: AdminShellComponent, canActivate: [authGuard], children: [
+    path: 'admin', component: AdminShellComponent, canActivate: [adminGuard], children: [
       { path: '', loadComponent: () => import('./features/admin/dashboard-page.component').then((m) => m.DashboardPageComponent) },
+      { path: 'bienvenida', loadComponent: () => import('./features/admin/owner-onboarding-page.component').then((m) => m.OwnerOnboardingPageComponent) },
       { path: 'reservas', loadComponent: () => import('./features/admin/reservations-page.component').then((m) => m.ReservationsPageComponent) },
       { path: 'alojamientos', loadComponent: () => import('./features/admin/accommodations-page.component').then((m) => m.AccommodationsPageComponent) },
       { path: 'pagos', loadComponent: () => import('./features/admin/payments-page.component').then((m) => m.PaymentsPageComponent) },
       { path: 'operacion', loadComponent: () => import('./features/admin/operations-page.component').then((m) => m.OperationsPageComponent) },
       { path: 'limpieza', loadComponent: () => import('./features/admin/housekeeping-page.component').then((m) => m.HousekeepingPageComponent) },
       { path: 'configuracion', loadComponent: () => import('./features/admin/settings-page.component').then((m) => m.SettingsPageComponent) },
+      { path: 'perfil', loadComponent: () => import('./features/account/profile-page.component').then((m) => m.ProfilePageComponent) },
+      { path: 'seguridad', loadComponent: () => import('./features/admin/security-page.component').then((m) => m.SecurityPageComponent) }
+    ]
+  },
+  {
+    path: 'cliente', canActivate: [clientGuard],
+    loadComponent: () => import('./layout/client-shell.component').then((m) => m.ClientShellComponent), children: [
+      { path: '', loadComponent: () => import('./features/client/client-reservations-page.component').then((m) => m.ClientReservationsPageComponent) },
+      { path: 'perfil', loadComponent: () => import('./features/account/profile-page.component').then((m) => m.ProfilePageComponent) },
       { path: 'seguridad', loadComponent: () => import('./features/admin/security-page.component').then((m) => m.SecurityPageComponent) }
     ]
   },

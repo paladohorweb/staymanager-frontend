@@ -18,6 +18,7 @@ import { FloatingWhatsappComponent } from '../shared/components/floating-whatsap
         @if (store.isDemoMode) { <div class="sidebar-demo-badge"><i class="bi bi-database"></i><span class="sidebar-detail"> Datos de demostración</span></div> }
         <nav class="side-nav" (click)="closePanels()">
           <span class="nav-caption">GESTIÓN</span>
+          <a routerLink="/admin/bienvenida" routerLinkActive="active" title="Primeros pasos"><span><i class="bi bi-rocket-takeoff"></i></span><b class="sidebar-detail">Primeros pasos</b></a>
           <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" title="Resumen"><span><i class="bi bi-grid"></i></span><b class="sidebar-detail">Resumen</b></a>
           <a routerLink="/admin/reservas" routerLinkActive="active" title="Reservas"><span><i class="bi bi-calendar3"></i></span><b class="sidebar-detail">Reservas</b></a>
           <a routerLink="/admin/alojamientos" routerLinkActive="active" title="Alojamientos"><span><i class="bi bi-houses"></i></span><b class="sidebar-detail">Alojamientos</b></a>
@@ -26,6 +27,7 @@ import { FloatingWhatsappComponent } from '../shared/components/floating-whatsap
           <a routerLink="/admin/operacion" routerLinkActive="active" title="Check-in y check-out"><span><i class="bi bi-box-arrow-in-right"></i></span><b class="sidebar-detail">Check-in / out</b></a>
           <a routerLink="/admin/limpieza" routerLinkActive="active" title="Limpieza"><span><i class="bi bi-stars"></i></span><b class="sidebar-detail">Limpieza</b></a>
           <a routerLink="/admin/configuracion" routerLinkActive="active" title="Configuración"><span><i class="bi bi-gear"></i></span><b class="sidebar-detail">Configuración</b></a>
+          <a routerLink="/admin/perfil" routerLinkActive="active" title="Mi perfil"><span><i class="bi bi-person-circle"></i></span><b class="sidebar-detail">Mi perfil</b></a>
           <a routerLink="/admin/seguridad" routerLinkActive="active" title="Cuenta y seguridad"><span><i class="bi bi-shield-lock"></i></span><b class="sidebar-detail">Cuenta y seguridad</b></a>
         </nav>
         <a routerLink="/" class="back-public" (click)="closePanels()" title="Ver portal público"><i class="bi bi-arrow-left"></i><span class="sidebar-detail"> Ver portal público</span></a>

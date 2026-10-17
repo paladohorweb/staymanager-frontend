@@ -99,10 +99,12 @@ export interface Payment {
 
 export interface SessionUser {
   id: string;
-  organizationId: string;
+  organizationId: string | null;
   fullName: string;
   email: string;
-  role: 'OWNER' | 'MANAGER' | 'RECEPTIONIST';
+  phone: string | null;
+  documentNumber: string | null;
+  role: 'OWNER' | 'MANAGER' | 'RECEPTIONIST' | 'HOUSEKEEPING' | 'CLIENT';
   mfaEnabled: boolean;
 }
 

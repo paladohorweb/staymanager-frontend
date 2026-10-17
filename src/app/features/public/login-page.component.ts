@@ -30,8 +30,8 @@ import { environment } from '../../../environments/environment';
           <div class="security-note"><i class="bi bi-shield-check"></i><span>El desafío vence en cinco minutos y los códigos de recuperación solo se pueden usar una vez.</span></div>
         }
         @if(error()){<div class="alert alert-danger py-2" role="alert">{{error()}}</div>}
-        <button class="btn btn-primary btn-block" type="submit" [disabled]="loading()">@if(loading()){<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>}{{mfaChallenge()?'Verificar e ingresar':'Ingresar al panel'}} →</button>
-        @if(!mfaChallenge()){<div class="login-divider">o</div><a class="btn btn-outline btn-block" routerLink="/registro">Crear una cuenta para mi alojamiento</a>}
+        <button class="btn btn-primary btn-block" type="submit" [disabled]="loading()">@if(loading()){<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>}{{mfaChallenge()?'Verificar e ingresar':'Ingresar a mi cuenta'}} →</button>
+        @if(!mfaChallenge()){<div class="login-divider">o</div><a class="btn btn-outline btn-block" routerLink="/registro">Crear cuenta de propietario o huésped</a>}
         <small class="demo-warning">{{demoMode?'Modo demo: los datos se guardan sólo en este navegador.':'Conexión cifrada al backend Java.'}} No compartas tu contraseña ni códigos 2FA.</small>
       </form></div>
     </div>
@@ -51,7 +51,10 @@ export class LoginPageComponent {
       if(this.mfaChallenge()) await this.auth.verifyMfa(this.mfaChallenge()!,this.mfaCode);
       else { const result=await this.auth.login(this.email,this.password); if(result.mfaRequired){this.mfaChallenge.set(result.challengeToken);return;} }
       await this.alerts.toast('Bienvenido a StayManager');
-      await this.router.navigateByUrl(this.route.snapshot.queryParamMap.get('returnUrl')??'/admin');
+      const requested=this.route.snapshot.queryParamMap.get('returnUrl');
+      const role=this.auth.currentUser()?.role;
+      const compatible=requested&&((role==='CLIENT'&&requested.startsWith('/cliente'))||(role!=='CLIENT'&&requested.startsWith('/admin')));
+      await this.router.navigateByUrl(compatible?requested!:this.auth.landingRoute());
     }catch(error){const message=error instanceof HttpErrorResponse&&error.status===401?'Verifica tus credenciales o el código de seguridad.':this.errors.message(error,'No fue posible iniciar sesión. Intenta nuevamente.');this.error.set(message);await this.alerts.error('No fue posible iniciar sesión',message);}
     finally{this.loading.set(false);}
   }

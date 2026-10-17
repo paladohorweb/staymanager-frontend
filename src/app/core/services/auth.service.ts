@@ -19,6 +19,19 @@ export interface RegistrationPayload {
   acceptedTerms: boolean;
 }
 
+export interface ClientRegistrationPayload {
+  fullName: string;
+  email: string;
+  password: string;
+  acceptedTerms: boolean;
+}
+
+export interface ProfilePayload {
+  fullName: string;
+  phone: string;
+  documentNumber: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   readonly currentUser = signal<SessionUser | null>(this.storage.readUser());
@@ -33,7 +46,7 @@ export class AuthService {
       }
       const user: SessionUser = {
         id: 'user-demo', organizationId: 'org-demo', fullName: 'Valentina Gómez',
-        email: 'owner@demo.com', role: 'OWNER', mfaEnabled: false
+        email: 'owner@demo.com', phone: '3001234567', documentNumber: '1030123456', role: 'OWNER', mfaEnabled: false
       };
       this.persist({ accessToken: 'demo-access-token', refreshToken: 'demo-refresh-token', tokenType: 'Bearer', expiresIn: 3600, user });
       return { mfaRequired: false, challengeToken: null, user };
@@ -58,6 +71,35 @@ export class AuthService {
     }));
     this.persist(session);
     return session.user;
+  }
+
+  async registerClient(payload: ClientRegistrationPayload): Promise<SessionUser> {
+    if (environment.demoMode) throw new Error('El registro está desactivado dentro de la demo pública.');
+    const session = await firstValueFrom(this.http.post<AuthTokens>(`${environment.apiUrl}/auth/register/client`, {
+      ...payload, fullName: payload.fullName.trim(), email: payload.email.trim()
+    }));
+    this.persist(session);
+    return session.user;
+  }
+
+  async updateProfile(payload: ProfilePayload): Promise<SessionUser> {
+    if (environment.demoMode) {
+      const user = this.currentUser();
+      if (!user) throw new Error('Inicia sesión para actualizar tu perfil.');
+      const updated = { ...user, fullName: payload.fullName.trim(), phone: payload.phone.trim() || null,
+        documentNumber: payload.documentNumber.trim() || null };
+      this.currentUser.set(updated);
+      this.storage.updateUser(updated);
+      return updated;
+    }
+    const updated = await firstValueFrom(this.http.put<SessionUser>(`${environment.apiUrl}/account/profile`, payload));
+    this.currentUser.set(updated);
+    this.storage.updateUser(updated);
+    return updated;
+  }
+
+  landingRoute(user: SessionUser | null = this.currentUser()): string {
+    return user?.role === 'CLIENT' ? '/cliente' : '/admin';
   }
 
   requestPasswordReset(email: string): Promise<AuthMessage> {

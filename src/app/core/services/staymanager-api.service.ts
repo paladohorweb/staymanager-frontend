@@ -21,10 +21,12 @@ import {
   ReservationStatus
 } from '../models/domain.models';
 import { ApiErrorService } from './api-error.service';
+import { AuthService } from './auth.service';
 import { environment } from '../../../environments/environment';
 import { DEMO_ACCOMMODATIONS, DEMO_PAYMENTS, DEMO_PROPERTIES, DEMO_RESERVATIONS, DEMO_SETTINGS } from '../data/demo.seed';
 
 type AccommodationPayload = Omit<Accommodation, 'id' | 'propertyName' | 'propertyLocation'>;
+type PropertyPayload = Omit<Property, 'id' | 'slug'>;
 
 @Injectable({ providedIn: 'root' })
 export class StayManagerApiService {
@@ -49,6 +51,7 @@ export class StayManagerApiService {
   readonly notifications = signal<AppNotification[]>([]);
   readonly settings = signal<OrganizationSettings | null>(null);
   readonly housekeeping = signal<HousekeepingTask[]>([]);
+  readonly clientReservations = signal<GuestPortalReservation[]>([]);
   readonly unreadNotifications = computed(() => this.notifications().filter((item) => !item.readAt).length);
   readonly loading = signal(false);
   readonly error = signal('');
@@ -59,7 +62,7 @@ export class StayManagerApiService {
     this.payments().filter((item) => item.status === 'APPROVED').reduce((total, item) => total + Number(item.amount), 0)
   );
 
-  constructor(private readonly http: HttpClient, private readonly errors: ApiErrorService) {}
+  constructor(private readonly http: HttpClient, private readonly errors: ApiErrorService, private readonly auth: AuthService) {}
 
   loadPublicCatalog(force = false): Promise<void> {
     if (this.publicLoad && !force) return this.publicLoad;
@@ -182,6 +185,10 @@ export class StayManagerApiService {
     const reservation = await firstValueFrom(this.http.post<Reservation>(`${this.api}/public/reservations`, request));
     const normalized = this.normalizeReservation(reservation);
     this.reservations.update((items) => [normalized, ...items]);
+    if (this.auth.currentUser()?.role === 'CLIENT'
+      && normalized.guest.email.toLowerCase() === this.auth.currentUser()?.email.toLowerCase()) {
+      try { await this.linkClientReservation(normalized.code); } catch { /* La reserva existe y puede vincularse manualmente. */ }
+    }
     return normalized;
   }
 
@@ -198,6 +205,31 @@ export class StayManagerApiService {
       `${this.api}/public/guest/reservations/access`, { code: code.trim(), email: email.trim() }
     ));
     return this.normalizeGuestPortal(reservation);
+  }
+
+  async loadClientReservations(): Promise<GuestPortalReservation[]> {
+    if (this.isDemoMode) return [];
+    const items = await firstValueFrom(this.http.get<GuestPortalReservation[]>(`${this.api}/client/reservations`));
+    const normalized = items.map((item) => this.normalizeGuestPortal(item));
+    this.clientReservations.set(normalized);
+    return normalized;
+  }
+
+  async linkClientReservation(code: string): Promise<GuestPortalReservation> {
+    if (this.isDemoMode) throw new Error('Esta función requiere una cuenta de huésped.');
+    const linked = this.normalizeGuestPortal(await firstValueFrom(this.http.post<GuestPortalReservation>(
+      `${this.api}/client/reservations/link`, { code: code.trim() }
+    )));
+    this.clientReservations.update((items) => [linked, ...items.filter((item) => item.code !== linked.code)]);
+    return linked;
+  }
+
+  async cancelClientReservation(code: string): Promise<GuestPortalReservation> {
+    const updated = this.normalizeGuestPortal(await firstValueFrom(this.http.post<GuestPortalReservation>(
+      `${this.api}/client/reservations/${encodeURIComponent(code)}/cancel`, {}
+    )));
+    this.clientReservations.update((items) => items.map((item) => item.code === code ? updated : item));
+    return updated;
   }
 
   async cancelGuestReservation(code: string, email: string): Promise<GuestPortalReservation> {
@@ -274,6 +306,7 @@ export class StayManagerApiService {
       return updated;
     }
     const updated = await firstValueFrom(this.http.put<OrganizationSettings>(`${this.api}/admin/settings`, {
+      organizationName: settings.organizationName,
       whatsappNumber: settings.whatsappNumber,
       checkInTime: settings.checkInTime,
       checkOutTime: settings.checkOutTime,
@@ -413,6 +446,32 @@ export class StayManagerApiService {
     this.accommodations.update((items) => [normalized, ...items]);
     await this.refreshDashboard();
     return normalized;
+  }
+
+  async addProperty(property: PropertyPayload): Promise<Property> {
+    if (this.isDemoMode) {
+      const created: Property = { ...property, id: crypto.randomUUID(), slug: property.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') };
+      this.properties.update((items) => [...items, created]);
+      this.persistDemo(this.demoKeys.properties, this.properties());
+      return created;
+    }
+    const created = await firstValueFrom(this.http.post<Property>(`${this.api}/admin/properties`, property));
+    this.properties.update((items) => [...items, created]);
+    return created;
+  }
+
+  async updateProperty(id: string, property: PropertyPayload): Promise<Property> {
+    if (this.isDemoMode) {
+      const current = this.propertyById(id);
+      if (!current) throw new Error('Propiedad no encontrada.');
+      const updated: Property = { ...current, ...property };
+      this.properties.update((items) => items.map((item) => item.id === id ? updated : item));
+      this.persistDemo(this.demoKeys.properties, this.properties());
+      return updated;
+    }
+    const updated = await firstValueFrom(this.http.put<Property>(`${this.api}/admin/properties/${id}`, property));
+    this.properties.update((items) => items.map((item) => item.id === id ? updated : item));
+    return updated;
   }
 
   async updateAccommodation(id: string, accommodation: AccommodationPayload): Promise<Accommodation> {

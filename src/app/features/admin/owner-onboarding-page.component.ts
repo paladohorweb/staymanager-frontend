@@ -1,0 +1,33 @@
+import { Component, computed, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
+import { AlertService } from '../../core/services/alert.service';
+import { ApiErrorService } from '../../core/services/api-error.service';
+import { StayManagerApiService } from '../../core/services/staymanager-api.service';
+
+@Component({
+  selector: 'app-owner-onboarding-page', standalone: true, imports: [FormsModule, RouterLink],
+  template: `
+    <section class="welcome-hero"><div><span class="eyebrow">BIENVENIDO A STAYMANAGER</span><h1>Prepara tu operación</h1><p>Completa estos pasos para publicar el primer alojamiento y empezar a recibir reservas.</p></div><div class="progress-ring"><strong>{{progress()}}%</strong><small>completado</small></div></section>
+    <section class="onboarding-grid">
+      <article class="panel step-card" [class.done]="profileReady()"><span class="step-number">1</span><i class="bi bi-person-vcard"></i><div><h2>Completa tu perfil</h2><p>Agrega teléfono y documento del responsable de la cuenta.</p></div><a class="btn btn-outline" routerLink="/admin/perfil">{{profileReady()?'Revisar perfil':'Completar perfil'}}</a></article>
+      <article class="panel step-card" [class.done]="businessReady()"><span class="step-number">2</span><i class="bi bi-building-gear"></i><div><h2>Configura el negocio</h2><p>Define horarios, WhatsApp, ubicación e instrucciones generales.</p></div><a class="btn btn-outline" routerLink="/admin/configuracion">{{businessReady()?'Revisar configuración':'Configurar negocio'}}</a></article>
+      <article class="panel step-card property-step" [class.done]="propertyReady()"><span class="step-number">3</span><i class="bi bi-pin-map"></i><div><h2>Crea una propiedad</h2><p>Una propiedad agrupa cabañas o unidades dentro del mismo lugar.</p></div>@if(!propertyReady()){<form #form="ngForm" (ngSubmit)="createProperty()"><label>Nombre<input name="name" [(ngModel)]="propertyName" required maxlength="140" placeholder="Refugios del Bosque"></label><label>Ubicación<input name="location" [(ngModel)]="propertyLocation" required maxlength="180" placeholder="Guatapé, Antioquia"></label><label>Descripción<textarea name="description" [(ngModel)]="propertyDescription" required maxlength="1000" rows="3"></textarea></label><button class="btn btn-primary btn-block" [disabled]="form.invalid||savingProperty()">@if(savingProperty()){<span class="spinner-border spinner-border-sm me-2"></span>}Crear propiedad</button></form>}@else{<div class="done-summary"><i class="bi bi-check-circle-fill"></i><span><strong>{{store.properties()[0].name}}</strong><small>{{store.properties()[0].location}}</small></span></div><a class="btn btn-outline" routerLink="/admin/alojamientos">Gestionar propiedades</a>}</article>
+      <article class="panel step-card" [class.done]="accommodationReady()"><span class="step-number">4</span><i class="bi bi-houses"></i><div><h2>Publica un alojamiento</h2><p>Configura capacidad, tarifas, fotos y ruta de llegada.</p></div><a class="btn btn-primary" routerLink="/admin/alojamientos" [class.disabled]="!propertyReady()">{{accommodationReady()?'Gestionar alojamientos':'Crear primer alojamiento'}}</a></article>
+    </section>
+  `,
+  styles: [`
+    .welcome-hero{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1.2rem;padding:1.6rem 1.8rem;border-radius:20px;background:linear-gradient(125deg,#123f36,#26715f);color:#fff}.welcome-hero h1{font:400 clamp(2rem,4vw,3rem) Georgia,serif;margin:.25rem 0}.welcome-hero p{margin:0;color:#c7ddd7}.welcome-hero .eyebrow{color:#add9cc}.progress-ring{width:100px;height:100px;display:grid;place-content:center;text-align:center;border:8px solid rgba(255,255,255,.22);border-top-color:#b7e1d5;border-radius:50%}.progress-ring strong{font-size:1.2rem}.progress-ring small{font-size:.52rem}.onboarding-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}.step-card{position:relative;display:grid;align-content:start;gap:.8rem;padding:1.35rem;min-height:255px}.step-card>i{font-size:1.65rem;color:var(--primary)}.step-card h2{font-size:1rem;margin:0}.step-card p{font-size:.68rem;margin:.3rem 0}.step-number{position:absolute;right:1rem;top:1rem;width:28px;height:28px;display:grid;place-items:center;border-radius:50%;background:#edf3f1;color:var(--muted);font-size:.65rem;font-weight:900}.step-card.done{border-color:#b8decf}.step-card.done .step-number{background:#198754;color:#fff}.step-card .btn{align-self:end}.property-step{grid-row:span 2;min-height:526px}.property-step form{display:grid;gap:.7rem}.property-step textarea{resize:vertical}.done-summary{display:flex;align-items:center;gap:.7rem;padding:1rem;border-radius:12px;background:#edf8f3;color:#157347}.done-summary>i{font-size:1.35rem}.done-summary span{display:flex;flex-direction:column}.done-summary small{font-size:.6rem;color:var(--muted)}.disabled{pointer-events:none;opacity:.5}@media(max-width:800px){.onboarding-grid{grid-template-columns:1fr}.property-step{grid-row:auto;min-height:unset}}@media(max-width:540px){.welcome-hero{align-items:flex-start;flex-direction:column}.progress-ring{width:auto;height:auto;border:0;display:flex;gap:.3rem;text-align:left}}
+  `]
+})
+export class OwnerOnboardingPageComponent {
+  propertyName=''; propertyLocation=''; propertyDescription=''; readonly savingProperty=signal(false);
+  readonly profileReady=computed(()=>Boolean(this.auth.currentUser()?.phone&&this.auth.currentUser()?.documentNumber));
+  readonly businessReady=computed(()=>Boolean(this.store.settings()?.whatsappNumber&&this.store.settings()?.mapAddress));
+  readonly propertyReady=computed(()=>this.store.properties().length>0);
+  readonly accommodationReady=computed(()=>this.store.accommodations().length>0);
+  readonly progress=computed(()=>[this.profileReady(),this.businessReady(),this.propertyReady(),this.accommodationReady()].filter(Boolean).length*25);
+  constructor(readonly auth:AuthService,readonly store:StayManagerApiService,private readonly alerts:AlertService,private readonly errors:ApiErrorService){}
+  async createProperty():Promise<void>{this.savingProperty.set(true);try{await this.store.addProperty({name:this.propertyName,location:this.propertyLocation,description:this.propertyDescription,imageUrl:'',active:true});await this.alerts.success('Propiedad creada','Ahora puedes agregar el primer alojamiento.');}catch(error){await this.alerts.error('No se pudo crear la propiedad',this.errors.message(error));}finally{this.savingProperty.set(false);}}
+}
